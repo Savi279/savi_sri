@@ -1,0 +1,293 @@
+.app-header {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  align-items: center;
+  background-color: #f3ede7;
+  padding: 0 20px;
+  position: sticky;
+  z-index: 10;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.site-title {
+  color: darkgoldenrod;
+  font-size: 40px;
+  margin: 0 0 0 -10px;
+}
+
+.tag-line {
+  color: #5b5001;
+  font-size: 20px;
+  font-style: italic;
+  margin: 0 0 0 -10px;
+
+}
+
+.app-logo {
+  width: 150px;
+  height: 130px;
+  object-fit: contain;
+}
+
+/* Nav Section */
+.app-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 30px;
+}
+
+.nav-link {
+  font-size: 23px;
+  text-decoration: none;
+  color: #5b5001;
+  font-weight: bold;
+  transition: color 0.3s, border-bottom 0.3s;
+}
+
+.nav-link:hover {
+  color: #1f2f66;
+}
+
+.nav-link.active {
+  color: #1f2f66 !important;
+}
+
+/* Profile & Menu */
+.header-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.profile-link {
+  padding-left: 10px;
+  color: darkgoldenrod;
+  transition: color 0.3s;
+}
+
+.profile-link:hover,
+.profile-link.active {
+  color: #1f2f66;
+}
+
+/* Hamburger Menu Icon */
+.menu-icon {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #1f2f66;
+}
+
+/* Main & Footer */
+.app-main {
+  background-color: #f3ede7;
+  min-height: 60vh;
+}
+
+/* Footer Styling */
+.app-footer {
+  background-color: #1f2f66;
+  color: white;
+  padding: 30px 20px 10px;
+  font-family: 'Georgia', serif;
+}
+
+.footer-content {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 30px;
+  margin-bottom: 20px;
+}
+
+.footer-brand {
+  flex: 1 1 250px;
+  display: flex;
+  gap: 15px;
+}
+
+.footer-logo {
+  width: 50px;
+  height: 50px;
+  border-radius: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.footer-title {
+  margin: 0;
+  font-size: 30px;
+  font-weight: bold;
+}
+
+.footer-subtitle {
+  margin: 0;
+  font-size: 17px;
+  font-style: italic;
+  color: #ccc;
+}
+
+.footer-desc {
+  font-size: 14px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  color: #ddd;
+}
+
+
+.icon-circle {
+  width: 30px;
+  height: 30px;
+  background-color: darkgoldenrod;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 18px;
+  color: white;
+}
+
+/* Footer Links */
+.footer-links {
+  flex: 1 1 150px;
+}
+
+.Link{
+  font-size: 30px
+}
+.why-choose {
+  background-color: #1f2f66;
+  padding: 40px 20px 30px;
+  color: white;
+  text-align: center;
+}
+
+.why-choose h2 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.underline {
+  width: 60px;
+  height: 4px;
+  background-color: darkgoldenrod;
+  margin: 0 auto 30px;
+  border-radius: 2px;
+}
+
+.features {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.feature-card {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 20px;
+  border-radius: 12px;
+  width: 300px;
+  text-align: center;
+}
+
+.feature-icon {
+  font-size: 30px;
+  margin-bottom: 10px;
+}
+
+.footer-links h4 {
+  font-size: 16px;
+  margin-bottom: 10px;
+  color: white;
+  font-weight: bold;
+}
+
+.footer-links p {
+  margin: 5px 0;
+  font-size: 14px;
+  color: #ccc;
+  cursor: pointer;
+}
+
+.footer-links p:hover {
+  text-decoration: underline;
+}
+
+/* Bottom copyright */
+.footer-bottom {
+  text-align: center;
+  font-size: 14px;
+  border-top: 1px solid #ccc;
+  padding-top: 10px;
+  color: #ddd;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .footer-content {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .footer-brand {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .footer-links {
+    margin-top: 20px;
+  }
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .app-header {
+    grid-template-columns: 1fr auto auto;
+    padding: 10px 15px;
+  }
+
+  .site-title {
+    font-size: 28px;
+  }
+
+  .app-logo {
+    width: 80px;
+    height: 70px;
+  }
+
+  .app-nav {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: #f3ede7;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 0;
+    display: none;
+  }
+
+  .app-nav.open {
+    display: flex;
+  }
+
+  .nav-link {
+    font-size: 24px;
+  }
+
+  .menu-icon {
+    display: block;
+  }
+}

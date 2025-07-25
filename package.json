@@ -3,8 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/material": "^7.2.0",
+    "@mui/styles": "^6.4.8",
+    "ajv": "^6.12.6",
+    "ajv-keywords": "^3.5.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-icons": "^5.5.0",
+    "react-router-dom": "^7.7.0",
     "react-scripts": "5.0.1"
   },
   "scripts": {
@@ -27,5 +35,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.8"
   }
 }
