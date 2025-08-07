@@ -156,3 +156,11 @@
   background: #1e2a78;
   color: white;
 }
+
+.view-btn:hover {
+  background: #e0b43c;
+}
+
+.add-btn:hover {
+  background: goldenrod;
+}

@@ -5,20 +5,36 @@ import {
   Routes,
   Route,
   NavLink,
+  Link,
 } from 'react-router-dom';
 import Home from './components/home';
 import Collections from './components/collections';
 import AboutUs from './components/aboutUs';
 import ContactUs from './components/contactUs';
 import Profile from './components/profile';
+import Cart from './components/cart';
 import SaviSriLogo from './assests/Images/SaviSriLogo.png';
-import { FaUserCircle, FaBars, FaTimes } from 'react-icons/fa';
+import { FaUserCircle, FaBars, FaTimes, FaShoppingCart } from 'react-icons/fa';
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [cartItems, setCartItems] = useState([]);
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
   const closeMenu = () => setMenuOpen(false);
+
+  const addToCart = (product) => {
+    setCartItems((prevItems) => {
+      const existingItem = prevItems.find((item) => item.id === product.id);
+      if (existingItem) {
+        return prevItems.map((item) =>
+          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      } else {
+        return [...prevItems, { ...product, quantity: 1 }];
+      }
+    });
+  };
 
   return (
     <Router>
@@ -47,6 +63,16 @@ function App() {
         </nav>
 
         <div className="header-right">
+          <NavLink to="/cart" className="cart-link">
+            <button className="cart-button">
+              <FaShoppingCart size={24} />
+              {cartItems.length > 0 && (
+                <span className="cart-badge">{cartItems.reduce((acc, item) => acc + item.quantity, 0)}</span>
+              )}
+              Cart
+            </button>
+          </NavLink>
+
           <NavLink to="/profile" className={({ isActive }) => isActive ? 'profile-link active' : 'profile-link'}>
             <FaUserCircle size={50} />
           </NavLink>
@@ -60,10 +86,11 @@ function App() {
       <main className="app-main">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/collections" element={<Collections />} />
+          <Route path="/collections" element={<Collections addToCart={addToCart} />} />
           <Route path="/about-us" element={<AboutUs />} />
           <Route path="/contactUs" element={<ContactUs />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/cart" element={<Cart cartItems={cartItems} setCartItems={setCartItems} />} />
         </Routes>
       </main>
 
@@ -104,25 +131,25 @@ function App() {
 
           <div className="footer-links">
             <h3>Quick Links</h3>
-            <p className="Link">Home</p>
-            <p className="Link">Collection</p>
-            <p className="Link">About</p>
-            <p className="Link">Contact</p>
+            <Link to="/" className="footer-link">Home</Link>
+            <Link to="/collections" className="footer-link">Collection</Link>
+            <Link to="/about-us" className="footer-link">About</Link>
+            <Link to="/contactUs" className="footer-link">Contact</Link>
           </div>
 
           <div className="footer-links">
             <h3>Categories</h3>
-            <p className="Link">Short Kurtis</p>
-            <p className="Link">Long Kurtis</p>
-            <p className="Link">Anarkali Kurtis</p>
+            <Link to="/collections?category=Short" className="footer-link">Short Kurtis</Link>
+            <Link to="/collections?category=Long" className="footer-link">Long Kurtis</Link>
+            <Link to="/collections?category=Anarkali" className="footer-link">Anarkali Kurtis</Link>
           </div>
 
           <div className="footer-links">
             <h3>Customer Care</h3>
-            <p className="Link">Size Guide</p>
-            <p className="Link">Return Policy</p>
-            <p className="Link">Shipping Info</p>
-            <p className="Link">FAQ</p>
+            <Link to="/size-guide" className="footer-link">Size Guide</Link>
+            <Link to="/return-policy" className="footer-link">Return Policy</Link>
+            <Link to="/shipping-info" className="footer-link">Shipping Info</Link>
+            <Link to="/faq" className="footer-link">FAQ</Link>
           </div>
         </div>
 
