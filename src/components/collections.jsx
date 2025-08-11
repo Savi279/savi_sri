@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "../styleSheets/collections.css";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { FaStar } from "react-icons/fa";
 
 const useQuery = () => {
@@ -10,6 +10,7 @@ const useQuery = () => {
 const Collections = ({ addToCart }) => {
   const [products, setProducts] = useState([]);
   const query = useQuery();
+  const navigate = useNavigate();
   const initialCategory = query.get("category") || "All";
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
 
@@ -29,13 +30,27 @@ const Collections = ({ addToCart }) => {
       ? products
       : products.filter((product) => product.category === selectedCategory);
 
-  useEffect(() => {
-    filteredProducts.forEach((product) => {
-      fetch(`http://localhost:5000/api/products/${product.id}/view`, {
-        method: "POST",
-      }).catch((err) => console.error("Failed to increment view", err));
-    });
-  }, [filteredProducts]);
+  const handleViewClick = (productId) => {
+    // First increment the view count
+    fetch(`http://localhost:5000/api/products/${productId}/view`, {
+      method: "POST",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setProducts((prevProducts) =>
+            prevProducts.map((product) =>
+              product.id === productId
+                ? { ...product, views: data.views }
+                : product
+            )
+          );
+          // Then navigate to the product view page
+          navigate(`/product/${productId}`);
+        }
+      })
+      .catch((err) => console.error("Failed to increment view", err));
+  };
 
   return (
     <div className="collection-container">
@@ -62,21 +77,39 @@ const Collections = ({ addToCart }) => {
         {filteredProducts.map((item) => (
           <div className="product-card" key={item.id}>
             <img
-              src={item.image}
+              src={item.images && item.images.length > 0 ? item.images[0] : ''}
               alt={item.title}
               className="product-image"
             />
             <h3 className="product-name">{item.title}</h3>
             <p className="description">{item.description}</p>
-            <div className="rating">
-              {[...Array(item.rating)].map((_, i) => (
-                <FaStar key={i} color="#b38b2e" />
-              ))}
-              <span> ({item.views} reviews)</span>
+            <div className="product-stats">
+              {console.log('Product:', item.title, 'Views:', item.views, 'Rating:', item.rating)}
+              {(item.views >= 10) ? (
+                <div className="views">
+                  <span>{item.views} views</span>
+                </div>
+              ) : null}
+              {false /* Hide ratings until user rates */ ? (
+                 <div className="rating">
+                  {[...Array(Math.floor(item.rating))].map((_, i) => (
+                    <FaStar 
+                      key={i} 
+                      className={`star ${i < Math.floor(item.rating) ? 'filled' : ''}`}
+                    />
+                  ))}
+                  <span className="rating-text">{item.rating} ({item.reviews} reviews)</span>
+                </div>
+              ) : null}
             </div>
             <div className="footer">
               <span className="price">{item.price}</span>
-              <button className="view-btn">View</button>
+              <button 
+                className="view-btn" 
+                onClick={() => handleViewClick(item.id)}
+              >
+                View
+              </button>
               <button className="add-btn" onClick={() => addToCart(item)}>
                 Add to Cart
               </button>

@@ -79,6 +79,7 @@
   color: #1f2f66;
 }
 
+
 /* Hamburger Menu Icon */
 .menu-icon {
   display: none;
@@ -249,6 +250,18 @@
   padding-top: 10px;
   color: #ddd;
 }
+.favorites-button{
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: darkgoldenrod;
+}
+
+.favorites-button:hover,
+.favorites-button.active {
+  color: #911919;
+}
+
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -329,8 +342,9 @@
   transition: background-color 0.3s ease;
 }
 
-.cart-button:hover {
-  background-color: #a07a24;
+.cart-button:hover,
+.cart-button.active {
+  background-color:#1f2f66 ;
 }
 
 .cart-badge {

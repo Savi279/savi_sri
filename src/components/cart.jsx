@@ -58,11 +58,20 @@ const Cart = ({ cartItems, setCartItems }) => {
               <div className="cart-item-details">
                 <h3 className="item-name">{item.title}</h3>
                 <p className="item-description">{item.description}</p>
-                <div className="rating">
-                  {[...Array(item.rating)].map((_, i) => (
-                    <FaStar key={i} color="#b38b2e" />
-                  ))}
-                  <span> ({item.views} reviews)</span>
+                <div className="product-stats">
+                  {item.views >= 10 && (
+                    <div className="views">
+                      <span>{item.views} views</span>
+                    </div>
+                  )}
+                  {false /* Hide ratings until user rates */ && (
+                    <div className="rating">
+                      {[...Array(Math.floor(item.rating))].map((_, i) => (
+                        <FaStar key={i} color="#b38b2e" />
+                      ))}
+                      <span> ({item.reviews || 0} reviews)</span>
+                    </div>
+                  )}
                 </div>
                 <div className="cart-item-controls">
                   <button onClick={() => decrementQuantity(item.id)}>-</button>
