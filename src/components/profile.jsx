@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../styleSheets/profile.css';
+import { Link } from 'react-router-dom';
+import { FaUserCircle } from 'react-icons/fa';
+
 
 const Profile = () => {
   const [step, setStep] = useState('email');
@@ -180,7 +183,7 @@ const Profile = () => {
             placeholder="Enter your password"
           />
         </div>
-        <button type="submit" disabled={loading}>
+        <button type="submit" class="LoginButton" disabled={loading}>
           {loading ? 'Logging in...' : 'Login'}
         </button>
       </form>
@@ -272,31 +275,103 @@ const Profile = () => {
     </div>
   );
 
-  const renderUserProfile = () => (
-    <div className="profile-container">
-      <h2>My Profile</h2>
-      <div className="profile-info">
-        <div className="info-item">
-          <strong>Name:</strong> {userData.name}
+ 
+
+  const renderUserProfile = () => {
+  if (!userData) return null;
+  const orders = [
+      { id: 'SS2024001', name: 'Floral Bloom Essence', price: 1299, status: 'Delivered', date: 'March 10, 2024' },
+      { id: 'SS2024002', name: 'Elegant Evening Kurti', price: 1899, status: 'Shipped', date: 'March 12, 2024' },
+    ];
+
+  return (
+    <div className="user-profile">
+      <div className="user-info">
+        <FaUserCircle size={100} className="user-avatar" />
+        <h2>{userData.name}</h2>
+        <h3>Fashion Enthusiast</h3>
+        <div className="user-stats">
+        <div className="stat">
+          <h3>{userData.orders || 5}</h3>
+          <p>Orders</p>
         </div>
-        <div className="info-item">
-          <strong>Email:</strong> {userData.email}
-        </div>
-        <div className="info-item">
-          <strong>Mobile:</strong> {userData.mobile}
-        </div>
-        <div className="info-item">
-          <strong>Gender:</strong> {userData.gender}
-        </div>
-        <div className="info-item">
-          <strong>Address:</strong> {userData.address}
+        
+        <div className="stat">
+          <h3>{userData.membershipDuration || 1.5} Years</h3>
+          <p>Member Since</p>
         </div>
       </div>
-        <button onClick={handleLogout} className="logout-btn">
-          Logout
+      </div>
+      
+      <div className="personal-info">
+        <div className= "info-stats">
+        <h3>Personal Information</h3>
+        <button className="edit-button">Edit</button>
+        </div>
+        <p><strong>Full Name:</strong> {userData.name}</p>
+        <p><strong>Email:</strong> {userData.email}</p>
+        <p><strong>Phone:</strong> {userData.mobile}</p>
+      </div>
+      <div className="shipping-address">
+        <div className="info-stats">
+           <h3>Shipping Address</h3>
+                <button className="edit-button">Edit</button>
+
+        </div>
+       
+        <p><strong>Home Address:</strong></p>
+        <p>{userData.address}</p>
+      </div>
+      <div className="recent-orders">
+        <h3>Recent Orders</h3>
+        {orders.map(order => (
+          <div key={order.id} className="order-item">
+            <div className="order-details">
+              <span>{order.name}</span>
+              <p>Order #{order.id}</p>
+              <p>Delivered on {order.date}</p>
+            </div>
+            <div className="order-price">
+              <span>₹{order.price}</span>
+              <span className={`order-status ${order.status.toLowerCase()}`}>{order.status}</span>
+            </div>
+          </div>
+        ))}
+        <button className="view-all-orders">View All Orders</button>
+      </div>
+      <div className="favorites-section">
+        <h3>Your Favorites</h3>
+        <div className="favorites-list">
+          {/* Render favorite items here */}
+          <p>No favorites added yet.</p>
+          <button>
+          <Link to="/favorites" className="view-favorites-btn">
+            View Favorites
+          </Link>
         </button>
+        </div>
+       <div>
+        <Link to="/collections" className="browse-btn">
+          Track Orders
+        </Link>
+        <Link to="/collections" className="browse-btn">
+          Payment Methods
+        </Link>
+        <Link to="/collections" className="browse-btn">
+          Rewards & Offers
+        </Link>
+        <Link to="/collections" className="browse-btn">
+          Customer Support
+        </Link>
+       </div>
+        
+
+      </div>
+      <button className="logout-button" onClick={handleLogout}>Logout</button>
     </div>
   );
+};
+
 
   return (
     <div className="profile-page">

@@ -40,7 +40,7 @@ const Favorites = () => {
             
             <div className="favorite-item-details">
               <h3 className="favorite-item-title">{product.title}</h3>
-              <p className="favorite-item-price">{product.price}</p>
+              <p className="favorite-item-price">₹{product.price}</p>
               
               <div className="favorite-item-actions">
                 <Link 
@@ -57,19 +57,29 @@ const Favorites = () => {
                 >
                   <FaTrash />
                 </button>
-                
-                <button 
-                  className="toggle-favorite-btn active"
-                  onClick={() => toggleFavorite(product)}
-                  title="Remove from favorites"
-                >
-                  <FaHeart />
-                </button>
+               
               </div>
+
+              
             </div>
+
           </div>
         ))}
       </div>
+
+       <div className="GotoButtons">
+                 <button className="goto-cart-btn" title="Go to Cart">
+                  <Link to="/cart" style={{ textDecoration: 'none', color: 'white', fontSize: '16px',fontWeight: 'bold' }}>
+                  Add to Cart
+                  </Link>
+                </button>
+
+                <button className="goto-collections-btn" title="Go to Collections">
+                  <Link to="/collections" style={{ textDecoration: 'none', color: 'white', fontSize: '16px',fontWeight: 'bold' }}>
+                   See More Collections
+                  </Link>
+                </button>
+                </div>
     </div>
   );
 };

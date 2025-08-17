@@ -2,7 +2,7 @@
 .favorites-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: 0px 20px 20px 20px;
 }
 
 .favorites-container h1 {
@@ -78,7 +78,6 @@
 
 .favorite-item-image {
   width: 100%;
-  height: 250px;
   object-fit: cover;
   transition: transform 0.3s ease;
 }
@@ -149,6 +148,39 @@
 
 .toggle-favorite-btn.active:hover {
   background: #c0392b;
+}
+
+.GotoButtons{
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  flex-direction: row;
+  gap: 20px;
+
+}
+
+.goto-cart-btn{
+  background: #2c3e50;
+  width: 50%;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+}
+
+.goto-cart-btn:hover {
+  background: #1a252f;
+}
+
+.goto-collections-btn {
+  background: #b38b2e;
+   width: 50%;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+}
+
+.goto-collections-btn:hover {
+  background: #4f3d12;
 }
 
 /* Responsive Design */
