@@ -332,7 +332,7 @@ const Profile = () => {
               <p>Delivered on {order.date}</p>
             </div>
             <div className="order-price">
-              <span>₹{order.price}</span>
+              <span className="order-profile-price">₹{order.price}</span>
               <span className={`order-status ${order.status.toLowerCase()}`}>{order.status}</span>
             </div>
           </div>
@@ -350,7 +350,10 @@ const Profile = () => {
           </Link>
         </button>
         </div>
-       <div>
+      </div>
+
+      <div className="browser-Buttons">
+        <p style={{fontSize:"20px",fontWeight:"bold"}}>Quick Actions</p>
         <Link to="/collections" className="browse-btn">
           Track Orders
         </Link>
@@ -364,9 +367,6 @@ const Profile = () => {
           Customer Support
         </Link>
        </div>
-        
-
-      </div>
       <button className="logout-button" onClick={handleLogout}>Logout</button>
     </div>
   );

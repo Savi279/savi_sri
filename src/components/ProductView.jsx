@@ -53,14 +53,14 @@ const ProductView = () => {
 
   const handleBuyNow = () => {
     if (!isLoggedIn()) {
-      navigate('/login', { state: { from: location } });
+      navigate('/profile', { state: { from: location } });
       return;
     }
     if (!selectedSize) {
       alert('Please select a size');
       return;
     }
-    console.log('Buy now:', product.title, 'Size:', selectedSize);
+     navigate('/buynow', { state: { product, selectedSize } });
   };
 
   const toggleFavorite = () => {
@@ -83,6 +83,8 @@ const ProductView = () => {
   if (!product) {
     return <div className="loading">Loading product details...</div>;
   }
+
+
 
   return (
     <div className="product-view-container">

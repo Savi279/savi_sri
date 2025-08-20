@@ -1,11 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useFavorites } from '../contexts/FavoritesContext';
-import { FaHeart, FaShoppingCart, FaTrash } from 'react-icons/fa';
+import { FaTrash } from 'react-icons/fa';
+import { useFavorites } from '../hooks/useFavorites';
 import '../styleSheets/favorites.css';
 
 const Favorites = () => {
-  const { favorites, removeFromFavorites, toggleFavorite } = useFavorites();
+  const { favorites, removeFavorite } = useFavorites();
 
   if (favorites.length === 0) {
     return (
@@ -52,7 +52,7 @@ const Favorites = () => {
                 
                 <button 
                   className="remove-favorite-btn"
-                  onClick={() => removeFromFavorites(product.id)}
+                  onClick={() => removeFavorite(product.id)}
                   title="Remove from favorites"
                 >
                   <FaTrash />

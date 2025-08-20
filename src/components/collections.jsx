@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import "../styleSheets/collections.css";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { addToCart } from "../store/cartSlice";
 import { FaStar } from "react-icons/fa";
 
 const useQuery = () => {
   return new URLSearchParams(useLocation().search);
 };
 
-const Collections = ({ addToCart }) => {
+const Collections = () => {
   const [products, setProducts] = useState([]);
   const query = useQuery();
   const navigate = useNavigate();

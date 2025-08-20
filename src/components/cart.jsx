@@ -1,31 +1,34 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { addToCart, removeFromCart, updateQuantity } from "../store/cartSlice";
+import { selectCartItems, selectCartTotal } from "../store/cartSlice";
 import "../styleSheets/cart.css";
 import { FaStar } from "react-icons/fa";
 
-const Cart = ({ cartItems, setCartItems }) => {
+const Cart = () => {
+  const dispatch = useDispatch();
+  const cartItems = useSelector(selectCartItems);
+  const cartTotal = useSelector(selectCartTotal);
+
   const incrementQuantity = (id) => {
-    setCartItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === id ? { ...item, quantity: item.quantity + 1 } : item
-      )
-    );
+    const item = cartItems.find(item => item.id === id);
+    if (item) {
+      dispatch(updateQuantity({ productId: id, quantity: item.quantity + 1 }));
+    }
   };
 
   const decrementQuantity = (id) => {
-    setCartItems((prevItems) =>
-      prevItems
-        .map((item) =>
-          item.id === id && item.quantity > 1
-            ? { ...item, quantity: item.quantity - 1 }
-            : item
-        )
-        .filter((item) => item.quantity > 0)
-    );
+    const item = cartItems.find(item => item.id === id);
+    if (item && item.quantity > 1) {
+      dispatch(updateQuantity({ productId: id, quantity: item.quantity - 1 }));
+    } else {
+      dispatch(removeFromCart(id));
+    }
   };
 
   const removeItem = (id) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
+    dispatch(removeFromCart(id));
   };
 
   const subtotal = cartItems.reduce((acc, item) => {
