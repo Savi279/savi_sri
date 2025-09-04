@@ -1,0 +1,77 @@
+
+.aboutUs-container {
+  font-family: 'Poppins', sans-serif;
+  padding: 3rem 2rem;
+  max-width: 960px;
+  margin: 0 auto;
+  background: #fffdf8;
+  color: #2c2c2c;
+  line-height: 1.8;
+}
+
+.hero-banner {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.headline {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.8rem;
+  color: #1e2a78;
+  margin-bottom: 0.5rem;
+}
+
+.subheadline {
+  font-size: 1.1rem;
+  color: #444;
+  font-style: italic;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+section {
+  margin-bottom: 2.5rem;
+}
+
+h2 {
+  font-size: 1.7rem;
+  margin-bottom: 0.8rem;
+  color: #d4af37;
+  font-family: 'Playfair Display', serif;
+}
+
+p {
+  font-size: 1rem;
+  color: #444;
+  margin-bottom: 0.7rem;
+}
+
+.pillars-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 1rem;
+}
+
+.pillars-list li {
+  background: #fdf7eb;
+  border-left: 4px solid #d4af37;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(212, 175, 55, 0.1);
+}
+
+.cta-section {
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #1e2a78;
+  margin-top: 3rem;
+}
+
+.signature {
+  margin-top: 1rem;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.2rem;
+  color: #d4af37;
+}
