@@ -260,6 +260,7 @@
 }
 .favorites-button{
   border: none;
+  width: 40px;
   background: none;
   cursor: pointer;
   color: darkgoldenrod;
@@ -273,8 +274,8 @@
 
 .favorites-badge {
   position: absolute;
-  top: -6px;
-  right: -6px;
+      top: -2px;
+    right: -2px;
   background-color: #f44336; /* red */
   color: white;
   border-radius: 50%;
@@ -369,8 +370,8 @@
 }
 
 .cart-badge {
-  top: -6px;
-  right: -6px;
+  top: -3px;
+  right: -3px;
   background-color: #f44336; /* red */
   color: white;
   border-radius: 50%;

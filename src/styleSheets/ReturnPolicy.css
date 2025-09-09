@@ -1,0 +1,23 @@
+/* ReturnPolicy.css */
+
+.return-policy-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.return-policy-title {
+  font-size: 2rem;
+  color: #333;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.return-policy-content {
+  font-size: 1rem;
+  color: #666;
+  line-height: 1.6;
+}
+
+/* Add more styles as needed for actual return policy implementation */

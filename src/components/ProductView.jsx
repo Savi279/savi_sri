@@ -11,7 +11,6 @@ import { useFavorites } from '../hooks/useFavorites'; // Import the useFavorites
 
 const ProductView = () => {
   const { id } = useParams();
-  console.log("Product ID from URL params:", id);
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
@@ -21,24 +20,16 @@ const ProductView = () => {
 
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedSize, setSelectedSize] = useState('');
+  const [selectedSize, setSelectedSize] = useState(null);
   const [showSizeChart, setShowSizeChart] = useState(false);
   const [error, setError] = useState(null);
   const [userRating, setUserRating] = useState(0); // This should ideally come from backend user data
   const [loading, setLoading] = useState(true); // Added loading state
-
-  // Dummy material/care/details for now, replace with actual product data
-  const dummyProductDetails = {
-    material: "Rayon Blend",
-    care: "Hand wash cold, line dry",
-    details: [
-      "Floral print design with vibrant colors",
-      "A-line silhouette with pleated details",
-      "Knee-length with flowing hem",
-      "Concealed back zipper closure",
-      "Fully lined for comfort",
-    ]
-  };
+  const [reviews, setReviews] = useState([]); // Reviews for the product
+  const [newReview, setNewReview] = useState(''); // New review text
+  const [newReviewRating, setNewReviewRating] = useState(0); // New review rating
+  const [submittingReview, setSubmittingReview] = useState(false); // Loading state for review submission
+  const [relatedProducts, setRelatedProducts] = useState([]); // Related products state
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -47,8 +38,20 @@ const ProductView = () => {
       try {
         const data = await customerProductApi.getById(id);
         setProduct(data);
+        setReviews(data.reviews || []);
         setSelectedImage(0);
-        setSelectedSize(data.sizes && data.sizes.length > 0 ? data.sizes[0] : ''); // Select first size by default
+        if (data.sizes && data.sizes.length > 0) {
+          const xsSize = data.sizes.find(s => s.size.toLowerCase() === 'xs');
+          setSelectedSize(xsSize || data.sizes[0]);
+        }
+
+        // Fetch related products based on category or other criteria
+        if (data.category && data.category._id) {
+          const related = await customerProductApi.getAll(data.category._id.toString());
+          // Filter out current product from related products
+          const filteredRelated = related.filter(p => p._id !== data._id);
+          setRelatedProducts(filteredRelated);
+        }
         
         // You would also fetch user-specific favorite and rating status here if implemented on backend
         // For now, these are client-side placeholders.
@@ -58,7 +61,6 @@ const ProductView = () => {
         // setUserRating(ratingStatus);
 
       } catch (err) {
-        console.error("Failed to fetch product details:", err);
         setError('Failed to load product details. Please try again later.');
       } finally {
         setLoading(false);
@@ -76,12 +78,18 @@ const ProductView = () => {
       navigate('/profile', { state: { from: location } });
       return;
     }
-    const sizeToUse = selectedSize || 'default';
+    if (product.sizes && product.sizes.length > 0 && !selectedSize) {
+      alert('Please select a size.');
+      return;
+    }
+    const sizeToUse = selectedSize ? selectedSize.size : 'default';
+    const priceToUse = selectedSize ? selectedSize.price : product.price;
     if (product) {
       dispatch(addToCart({
         productId: product._id,
         quantity: 1,
         size: sizeToUse,
+        price: priceToUse,
       }));
       alert(`${product.name} (Size: ${sizeToUse}) added to cart!`); // Custom modal
     }
@@ -97,7 +105,7 @@ const ProductView = () => {
       return;
     }
     if (product) {
-      navigate(`/buy-now/${product._id}`, { state: { product, selectedSize } });
+      navigate(`/buynow/${product._id}`, { state: { product, selectedSize } });
     }
   };
 
@@ -114,8 +122,31 @@ const ProductView = () => {
       setUserRating(rating); // Optimistic update
       alert(`You rated this product ${rating} stars!`); // Custom modal
     } catch (err) {
-      console.error("Failed to submit rating:", err);
       alert("Failed to submit rating. Please try again."); // Custom modal
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!isLoggedIn()) {
+      navigate('/profile', { state: { from: location } });
+      return;
+    }
+    if (newReviewRating === 0) {
+      alert('Please select a rating');
+      return;
+    }
+    setSubmittingReview(true);
+    try {
+      const response = await customerProductApi.submitReview(product._id, { rating: newReviewRating, comment: newReview });
+      setProduct(response);
+      setReviews(response.reviews || []);
+      setNewReview('');
+      setNewReviewRating(0);
+      alert('Review submitted successfully!');
+    } catch (err) {
+      alert("Failed to submit review. Please try again.");
+    } finally {
+      setSubmittingReview(false);
     }
   };
 
@@ -137,35 +168,37 @@ const ProductView = () => {
         {/* Left Side - Images */}
         <div className="product-images-section">
           <div className="main-image-container">
-            <img 
-              src={`http://localhost:5000${product.imageUrl}`} // Use imageUrl from backend
-              alt={product.name} // Use product.name
+            <img
+              src={`http://localhost:5000${product.images && product.images.length > 0 ? product.images[selectedImage] : product.imageUrl}`}
+              alt={product.name}
               className="main-product-image"
               onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/600x600/cccccc/000000?text=No+Image"; }}
             />
           </div>
           <div className="thumbnail-container">
-            {/* If product has multiple images, map through them. Assuming only one for now based on backend schema */}
-            {product.imageUrl && ( // Show thumbnail for main image
-              <img 
-                src={`http://localhost:5000${product.imageUrl}`}
-                alt={`${product.name} thumbnail`}
-                className={`thumbnail ${selectedImage === 0 ? 'active' : ''}`}
-                onClick={() => setSelectedImage(0)}
-                onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/100x100/cccccc/000000?text=No+Image"; }}
-              />
+            {product.images && product.images.length > 0 ? (
+              product.images.map((image, index) => (
+                <img
+                  key={index}
+                  src={`http://localhost:5000${image}`}
+                  alt={`${product.name} ${index + 1}`}
+                  className={`thumbnail ${selectedImage === index ? 'active' : ''}`}
+                  onClick={() => setSelectedImage(index)}
+                  onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/100x100/cccccc/000000?text=No+Image"; }}
+                />
+              ))
+            ) : (
+              // Fallback to single imageUrl if images array not available
+              product.imageUrl && (
+                <img
+                  src={`http://localhost:5000${product.imageUrl}`}
+                  alt={`${product.name} thumbnail`}
+                  className={`thumbnail ${selectedImage === 0 ? 'active' : ''}`}
+                  onClick={() => setSelectedImage(0)}
+                  onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/100x100/cccccc/000000?text=No+Image"; }}
+                />
+              )
             )}
-            {/* If you add 'images' array to backend product, replace above with:
-            {product.images.map((image, index) => (
-              <img 
-                key={index}
-                src={`http://localhost:5000${image}`}
-                alt={`${product.name} ${index + 1}`}
-                className={`thumbnail ${selectedImage === index ? 'active' : ''}`}
-                onClick={() => setSelectedImage(index)}
-              />
-            ))}
-            */}
           </div>
         </div>
 
@@ -189,26 +222,30 @@ const ProductView = () => {
                     />
                   ))}
                 </div>
-                 {product.reviews && <span className="rating-text"> ({product.reviews} reviews)</span>}
+                 {product.reviews && <span className="rating-text"> ({product.reviews.length} reviews)</span>}
               </div>
             ) : null}
           </div>
 
           <div className="product-price">
-            <span className="price">₹{product.price.toFixed(2)}</span> {/* Format price */}
+            <span className="price">
+              {selectedSize ? selectedSize.price.toFixed(2) : product.price.toFixed(2)}
+            </span> {/* Format price */}
           </div>
 
           <div className="size-section">
             <h3>Select Size</h3>
             <div className="size-options">
               {product.sizes && product.sizes.length > 0 ? (
-                product.sizes.map(size => (
-                  <button 
-                    key={size}
-                    className={`size-btn ${selectedSize === size ? 'selected' : ''}`}
-                    onClick={() => setSelectedSize(size)}
+                product.sizes.map(sizeObj => (
+                  <button
+                    key={sizeObj._id || sizeObj.size}
+                    className={`size-btn ${selectedSize && selectedSize.size === sizeObj.size ? 'selected' : ''}`}
+                    onClick={() => {
+                      setSelectedSize(sizeObj);
+                    }}
                   >
-                    {size}
+                    {sizeObj.size}
                   </button>
                 ))
               ) : (
@@ -247,7 +284,7 @@ const ProductView = () => {
             <button className="add-to-cart-btn" onClick={handleAddToCart}>
               <FaShoppingCart /> Add to Cart
             </button>
-            <button 
+            <button
               className={`favorite-btn ${isFavorite ? 'active' : ''}`}
               onClick={() => {
                 if (!localStorage.getItem('token')) {
@@ -257,7 +294,7 @@ const ProductView = () => {
                 toggleFavorite(product._id);
               }}
             >
-              <FaHeart /> {isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
+              <FaHeart /> 
             </button>
           </div>
         </div>
@@ -268,25 +305,128 @@ const ProductView = () => {
         <div className="info-tabs">
          {/* Add tabs here if needed, e.g., Description, Material, Reviews */}
         </div>
-        
+
         <div className="info-content">
           <h3>About the Product</h3>
           <p>{product.description}</p> {/* Product's description */}
-          
+
           <h4>Material & Care</h4>
-          <p><strong>Material:</strong> {product.material || dummyProductDetails.material}</p>
-          <p><strong>Care Instructions:</strong> {product.care || dummyProductDetails.care}</p>
-          
+          <p><strong>Material:</strong> {product.material}</p>
+          <p><strong>Care Instructions:</strong> {product.care}</p>
+
           <h4>Product Details</h4>
           <ul>
-            {(product.details || dummyProductDetails.details).map((detail, index) => (
+            {product.details.map((detail, index) => (
               <li key={index}>{detail}</li>
             ))}
           </ul>
         </div>
       </div>
 
-      {/* Size Chart Modal */}
+      {/* Reviews Section */}
+      <div className="reviews-section">
+        <h3>Customer Reviews</h3>
+        {reviews.length > 0 ? (
+          <div className="reviews-list">
+            {reviews.map((review, index) => (
+              <div key={index} className="review-item">
+                <div className="review-header">
+                  <div className="review-stars">
+                    {[...Array(5)].map((_, i) => (
+                      <FaStar key={i} className={`star ${i < review.rating ? 'filled' : ''}`} />
+                    ))}
+                  </div>
+                  <span className="review-user">{review.user?.name || 'Anonymous'}</span>
+                </div>
+                <p className="review-comment">{review.comment}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p>No reviews yet. Be the first to review this product!</p>
+        )}
+
+        {isLoggedIn() && (
+          <div className="submit-review">
+            <h4>Write a Review</h4>
+            <div className="review-form">
+              <div className="rating-input">
+                <label>Rating:</label>
+                <div className="stars">
+                  {[...Array(5)].map((_, i) => {
+                    const starIndex = i + 1;
+                    return (
+                      <FaStar
+                        key={i}
+                        className={`star ${starIndex <= newReviewRating ? 'filled' : ''}`}
+                        onClick={() => setNewReviewRating(starIndex)}
+                        style={{ cursor: 'pointer' }}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+              <textarea
+                placeholder="Write your review here..."
+                value={newReview}
+                onChange={(e) => setNewReview(e.target.value)}
+                rows="4"
+              />
+              <button
+                onClick={handleSubmitReview}
+                disabled={submittingReview}
+                className="submit-review-btn"
+              >
+                {submittingReview ? 'Submitting...' : 'Submit Review'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Related Products Section */}
+      {relatedProducts.length > 0 && (
+        <div className="related-products-section">
+          <h3>You Might Also Like</h3>
+          <div className="related-products-grid">
+            {relatedProducts.slice(0, 4).map((relatedProduct) => (
+              <div
+                key={relatedProduct._id}
+                className="related-product-card"
+                onClick={() => navigate(`/product/${relatedProduct._id}`)}
+              >
+                <div className="related-product-image">
+                  <img
+                    src={`http://localhost:5000${relatedProduct.images && relatedProduct.images.length > 0 ? relatedProduct.images[0] : relatedProduct.imageUrl}`}
+                    alt={relatedProduct.name}
+                    onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/200x200/cccccc/000000?text=No+Image"; }}
+                  />
+                </div>
+                <div className="related-product-info">
+                  <h4 className="related-product-name">{relatedProduct.name}</h4>
+                  <div className="related-product-price">
+                    <span className="price">₹{relatedProduct.price.toFixed(2)}</span>
+                  </div>
+                  {relatedProduct.rating && (
+                    <div className="related-product-rating">
+                      <div className="stars">
+                        {[...Array(5)].map((_, i) => (
+                          <FaStar
+                            key={i}
+                            className={`star ${i < relatedProduct.rating ? 'filled' : ''}`}
+                          />
+                        ))}
+                      </div>
+                      <span className="rating-text">({relatedProduct.reviews || 0})</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {showSizeChart && (
         <div className="modal-overlay" onClick={() => setShowSizeChart(false)}>
           <div className="size-chart-modal" onClick={e => e.stopPropagation()}>

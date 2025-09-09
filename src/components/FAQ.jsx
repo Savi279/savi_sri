@@ -1,9 +1,10 @@
 import React from 'react';
+import '../styleSheets/FAQ.css';
 
 const FAQ = () => (
-  <div style={{ padding: '20px' }}>
-    <h1>FAQ</h1>
-    <p>This is a placeholder for the FAQ page.</p>
+  <div className="faq-container">
+    <h1 className="faq-title">FAQ</h1>
+    <p className="faq-content">This is a placeholder for the FAQ page.</p>
   </div>
 );
 

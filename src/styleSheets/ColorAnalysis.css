@@ -37,20 +37,68 @@
     color: #444;
 }
 
-.color-analysis-form select {
+/* Custom dropdown styles */
+.custom-dropdown {
+    position: relative;
+    user-select: none;
+}
+
+.dropdown-toggle {
     width: 100%;
     padding: 10px;
+    font-size: 1em;
     border: 1px solid #ddd;
     border-radius: 5px;
-    font-size: 1em;
     background-color: white;
-    appearance: none; /* Remove default arrow */
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23000000%22%20d%3D%22M287%2C114.7L159.2%2C242.5c-3.2%2C3.2-8.3%2C3.2-11.5%2C0L5.4%2C114.7c-3.2-3.2-3.2-8.3%2C0-11.5l11.5-11.5c3.2-3.2%2C8.3-3.2%2C11.5%2C0L145.8%2C190.6c3.2%2C3.2%2C8.3%2C3.2%2C11.5%2C0l117.4-117.4c3.2-3.2%2C8.3-3.2%2C11.5%2C0l11.5%2C11.5C290.2%2C106.4%2C290.2%2C111.5%2C287%2C114.7z%22%2F%3E%3C%2Fsvg%3E');
-    background-repeat: no-repeat;
-    background-position: right 10px top 50%;
-    background-size: 12px auto;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.color-dot {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    margin-right: 10px;
+    border: 1px solid #ccc;
+}
+
+.dropdown-arrow {
+    margin-left: 10px;
+    font-size: 0.7em;
+    color: #666;
+}
+
+.dropdown-menu {
+    position: absolute;
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-top: 4px;
+    z-index: 1000;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.dropdown-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.dropdown-item:hover,
+.dropdown-item.selected {
+    background-color: #f0e6d2;
+}
+
+.dropdown-item .color-dot {
+    margin-right: 12px;
 }
 
 .color-analysis-form button {

@@ -170,6 +170,119 @@
   display: block;
 }
 
+/* Banner Section */
+.banner-section {
+  display: flex;
+  gap: 1rem;
+  padding: 2rem 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.banner-container {
+  position: relative;
+  width: 48%;
+  min-width: 300px;
+  height: 300px;
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(255, 255, 255, 0.6);
+}
+
+.banner-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.banner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(31, 47, 102, 0.5);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  text-align: center;
+  padding: 1rem;
+}
+
+.banner-overlay h2 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.banner-overlay p {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+.banner-overlay button {
+  background-color: darkgoldenrod;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  color: white;
+  font-weight: bold;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.banner-overlay button:hover {
+  background-color: #b8860b;
+  transform: scale(1.05);
+}
+
+/* Color Analysis Section */
+.color-analysis-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4rem 2rem;
+  background: linear-gradient(135deg, #f3ede7 0%, #d4a574 50%, #1f2f66 100%);
+  color: #1f2f66;
+  text-align: center;
+  min-height: 40vh;
+}
+
+.color-analysis-heading {
+  font-size: 3rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+.color-analysis-description {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  max-width: 600px;
+  color: #1f2f66;
+  font-style: italic;
+}
+
+.color-analysis-btn {
+  background-color: darkgoldenrod;
+  border: none;
+  padding: 1rem 2rem;
+  color: white;
+  font-weight: bold;
+  font-size: 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 2px 4px 10px rgba(255, 255, 255, 0.6);
+}
+
+.color-analysis-btn:hover {
+  background-color: #b8860b;
+  transform: scale(1.05);
+}
+
 /* Responsive Design */
 @media screen and (max-width: 768px) {
   .home-container {
@@ -198,5 +311,22 @@
 
   .overlay-text p {
     font-size: 0.95rem;
+  }
+
+  .color-analysis-section {
+    padding: 2rem 1rem;
+  }
+
+  .color-analysis-heading {
+    font-size: 2rem;
+  }
+
+  .color-analysis-description {
+    font-size: 1rem;
+  }
+
+  .color-analysis-btn {
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
   }
 }

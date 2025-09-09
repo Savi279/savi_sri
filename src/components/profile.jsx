@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import '../styleSheets/profile.css';
 import { Link, useNavigate} from 'react-router-dom';
 import { FaUserCircle } from 'react-icons/fa';
-import { authApi, orderApi, favoritesApi } from '../api/customer_api.js';
+import { authApi, orderApi } from '../api/customer_api.js';
 import { useDispatch, useSelector } from 'react-redux';
-import { logoutUser, setCurrentUser, fetchUser } from '../store/userSlice';
-  import { loginUser, registerUser } from '../store/userSlice';
+import { logoutUser, setCurrentUser, fetchUser, loginUser, registerUser } from '../store/userSlice';
 const Profile = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -17,7 +16,7 @@ const Profile = () => {
   const [otp, setOtp] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [userExists, setUserExists] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -26,10 +25,15 @@ const Profile = () => {
   const [gender, setGender] = useState('');
   const [address, setAddress] = useState('');
   const [orders, setOrders] = useState([]);
-  const [favorites, setFavorites] = useState([]);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditingPersonal, setIsEditingPersonal] = useState(false);
   const [updatedName, setUpdatedName] = useState('');
-  const [updatedPassword, setUpdatedPassword] = useState('');
+  const [updatedEmail, setUpdatedEmail] = useState('');
+  const [updatedMobile, setUpdatedMobile] = useState('');
+  const [isEditingPassword, setIsEditingPassword] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [addresses, setAddresses] = useState([]);
+  const [isEditingAddresses, setIsEditingAddresses] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -45,12 +49,8 @@ const Profile = () => {
     if (step === 'profile' && isAuthenticated) {
       const fetchData = async () => {
         try {
-          const [userOrders, userFavorites] = await Promise.all([
-            orderApi.getUserOrders(),
-            favoritesApi.getFavorites(),
-          ]);
+          const userOrders = await orderApi.getUserOrders();
           setOrders(userOrders);
-          setFavorites(userFavorites.products || []);
         } catch (err) {
           console.error("Failed to fetch profile data:", err);
         }
@@ -59,6 +59,12 @@ const Profile = () => {
     }
   }, [step, isAuthenticated]);
 
+  useEffect(() => {
+    if (currentUser && currentUser.addresses) {
+      setAddresses(currentUser.addresses);
+    }
+  }, [currentUser]);
+
   const handleRequestOTP = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -66,7 +72,6 @@ const Profile = () => {
     setSuccess('');
     try {
       const response = await authApi.checkUser(email);
-      setUserExists(response.userExists);
       setStep('otp');
       setSuccess('OTP sent to your email!');
     } catch (err) {
@@ -86,10 +91,8 @@ const Profile = () => {
       setSuccess('OTP verified successfully!');
 
       if (response.userExists) {
-        setUserExists(true);
         setStep('password'); // Go to login
       } else {
-        setUserExists(false);
         setStep('register'); // Go to registration
       }
     } catch (err) {
@@ -142,7 +145,7 @@ const Profile = () => {
         name,
         mobile,
         gender,
-        address
+        addresses
       };
       const resultAction = await dispatch(registerUser(registrationData));
       if (registerUser.fulfilled.match(resultAction)) {
@@ -176,27 +179,77 @@ const Profile = () => {
     navigate('/profile');
   };
 
-  const handleEdit = () => {
-    setIsEditing(true);
+  const handleEditPersonal = () => {
+    setIsEditingPersonal(true);
     setUpdatedName(currentUser.name);
+    setUpdatedEmail(currentUser.email);
+    setUpdatedMobile(currentUser.mobile);
   };
 
-  const handleUpdateProfile = async (e) => {
+  const handleEditPassword = () => {
+    setIsEditingPassword(true);
+  };
+
+  const handleEditAddresses = () => {
+    setIsEditingAddresses(true);
+  };
+
+  const handleUpdatePersonal = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     setSuccess('');
     try {
-      const updatedData = { name: updatedName };
-      if (updatedPassword) {
-        updatedData.password = updatedPassword;
-      }
+      const updatedData = { name: updatedName, email: updatedEmail, mobile: updatedMobile };
       const updatedUser = await authApi.updateUser(updatedData);
       dispatch(setCurrentUser(updatedUser));
-      setIsEditing(false);
-      setSuccess('Profile updated successfully!');
+      setIsEditingPersonal(false);
+      setSuccess('Personal information updated successfully!');
     } catch (err) {
-      setError(err.message || 'Failed to update profile');
+      setError(err.message || 'Failed to update personal information');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdatePassword = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    if (!oldPassword || !newPassword) {
+      setError('Both old and new passwords are required');
+      setLoading(false);
+      return;
+    }
+    try {
+      const updatedData = { oldPassword, newPassword };
+      const updatedUser = await authApi.updateUser(updatedData);
+      dispatch(setCurrentUser(updatedUser));
+      setIsEditingPassword(false);
+      setOldPassword('');
+      setNewPassword('');
+      setSuccess('Password updated successfully!');
+    } catch (err) {
+      setError(err.message || 'Failed to update password');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateAddresses = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    try {
+      const updatedData = { addresses };
+      const updatedUser = await authApi.updateUser(updatedData);
+      dispatch(setCurrentUser(updatedUser));
+      setIsEditingAddresses(false);
+      setSuccess('Addresses updated successfully!');
+    } catch (err) {
+      setError(err.message || 'Failed to update addresses');
     } finally {
       setLoading(false);
     }
@@ -320,13 +373,191 @@ const Profile = () => {
           </select>
         </div>
         <div className="form-group">
-          <label>Address</label>
-          <textarea
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
+          <label>House/Flat Number</label>
+          <input
+            type="text"
+            value={addresses.length > 0 ? addresses[0].houseFlatNo : ''}
+            onChange={(e) => {
+              const newAddresses = [...addresses];
+              if (newAddresses.length === 0) {
+                newAddresses.push({
+                  label: 'Home',
+                  houseFlatNo: '',
+                  building: '',
+                  area: '',
+                  city: '',
+                  state: '',
+                  pin: '',
+                  country: '',
+                  isDefault: true,
+                });
+              }
+              newAddresses[0].houseFlatNo = e.target.value;
+              setAddresses(newAddresses);
+            }}
             required
-            placeholder="Enter your complete address"
-            rows="3"
+            placeholder="Enter house/flat number"
+          />
+        </div>
+        <div className="form-group">
+          <label>Building</label>
+          <input
+            type="text"
+            value={addresses.length > 0 ? addresses[0].building : ''}
+            onChange={(e) => {
+              const newAddresses = [...addresses];
+              if (newAddresses.length === 0) {
+                newAddresses.push({
+                  label: 'Home',
+                  houseFlatNo: '',
+                  building: '',
+                  area: '',
+                  city: '',
+                  state: '',
+                  pin: '',
+                  country: '',
+                  isDefault: true,
+                });
+              }
+              newAddresses[0].building = e.target.value;
+              setAddresses(newAddresses);
+            }}
+            placeholder="Enter building name"
+          />
+        </div>
+        <div className="form-group">
+          <label>Area</label>
+          <input
+            type="text"
+            value={addresses.length > 0 ? addresses[0].area : ''}
+            onChange={(e) => {
+              const newAddresses = [...addresses];
+              if (newAddresses.length === 0) {
+                newAddresses.push({
+                  label: 'Home',
+                  houseFlatNo: '',
+                  building: '',
+                  area: '',
+                  city: '',
+                  state: '',
+                  pin: '',
+                  country: '',
+                  isDefault: true,
+                });
+              }
+              newAddresses[0].area = e.target.value;
+              setAddresses(newAddresses);
+            }}
+            required
+            placeholder="Enter area"
+          />
+        </div>
+        <div className="form-group">
+          <label>City</label>
+          <input
+            type="text"
+            value={addresses.length > 0 ? addresses[0].city : ''}
+            onChange={(e) => {
+              const newAddresses = [...addresses];
+              if (newAddresses.length === 0) {
+                newAddresses.push({
+                  label: 'Home',
+                  houseFlatNo: '',
+                  building: '',
+                  area: '',
+                  city: '',
+                  state: '',
+                  pin: '',
+                  country: '',
+                  isDefault: true,
+                });
+              }
+              newAddresses[0].city = e.target.value;
+              setAddresses(newAddresses);
+            }}
+            required
+            placeholder="Enter city"
+          />
+        </div>
+        <div className="form-group">
+          <label>State</label>
+          <input
+            type="text"
+            value={addresses.length > 0 ? addresses[0].state : ''}
+            onChange={(e) => {
+              const newAddresses = [...addresses];
+              if (newAddresses.length === 0) {
+                newAddresses.push({
+                  label: 'Home',
+                  houseFlatNo: '',
+                  building: '',
+                  area: '',
+                  city: '',
+                  state: '',
+                  pin: '',
+                  country: '',
+                  isDefault: true,
+                });
+              }
+              newAddresses[0].state = e.target.value;
+              setAddresses(newAddresses);
+            }}
+            required
+            placeholder="Enter state"
+          />
+        </div>
+        <div className="form-group">
+          <label>Pin</label>
+          <input
+            type="text"
+            value={addresses.length > 0 ? addresses[0].pin : ''}
+            onChange={(e) => {
+              const newAddresses = [...addresses];
+              if (newAddresses.length === 0) {
+                newAddresses.push({
+                  label: 'Home',
+                  houseFlatNo: '',
+                  building: '',
+                  area: '',
+                  city: '',
+                  state: '',
+                  pin: '',
+                  country: '',
+                  isDefault: true,
+                });
+              }
+              newAddresses[0].pin = e.target.value;
+              setAddresses(newAddresses);
+            }}
+            required
+            placeholder="Enter pin code"
+          />
+        </div>
+        <div className="form-group">
+          <label>Country</label>
+          <input
+            type="text"
+            value={addresses.length > 0 ? addresses[0].country : ''}
+            onChange={(e) => {
+              const newAddresses = [...addresses];
+              if (newAddresses.length === 0) {
+                newAddresses.push({
+                  label: 'Home',
+                  houseFlatNo: '',
+                  building: '',
+                  area: '',
+                  city: '',
+                  state: '',
+                  pin: '',
+                  country: '',
+                  isDefault: true,
+                });
+              }
+              newAddresses[0].country = e.target.value;
+              setAddresses(newAddresses);
+            }}
+            required
+            placeholder="Enter country"
           />
         </div>
         <div className="form-group">
@@ -358,44 +589,10 @@ const Profile = () => {
 
   /*** ---- PROFILE ---- ***/
 
-  const renderEditProfileForm = () => (
-    <div className="auth-container">
-      <h2>Edit Profile</h2>
-      <form onSubmit={handleUpdateProfile}>
-        <div className="form-group">
-          <label>Full Name</label>
-          <input
-            type="text"
-            value={updatedName}
-            onChange={(e) => setUpdatedName(e.target.value)}
-            required
-            placeholder="Enter your full name"
-          />
-        </div>
-        <div className="form-group">
-          <label>New Password (optional)</label>
-          <input
-            type="password"
-            value={updatedPassword}
-            onChange={(e) => setUpdatedPassword(e.target.value)}
-            placeholder="Enter new password"
-          />
-        </div>
-        <button type="submit" disabled={loading}>
-          {loading ? 'Saving...' : 'Save Changes'}
-        </button>
-        <button onClick={() => setIsEditing(false)} disabled={loading}>
-          Cancel
-        </button>
-      </form>
-    </div>
-  );
+
 
   const renderUserProfile = () => {
     if (!currentUser) return null;
-    if (isEditing) {
-      return renderEditProfileForm();
-    }
 
     const calculateMembershipYears = (isoDate) => {
       if (!isoDate) return 'New';
@@ -432,20 +629,276 @@ const Profile = () => {
         <div className="personal-info">
           <div className="info-stats">
             <h3>Personal Information</h3>
-            <button className="edit-button" onClick={handleEdit}>Edit</button>
+            <button className="edit-button" onClick={handleEditPersonal}>Edit</button>
           </div>
-          <p><strong>Full Name:</strong> {currentUser.name}</p>
-          <p><strong>Email:</strong> {currentUser.email}</p>
-          <p><strong>Phone:</strong> {currentUser.mobile}</p>
+          {isEditingPersonal ? (
+            <form onSubmit={handleUpdatePersonal}>
+              <div className="form-group">
+                <label>Full Name</label>
+                <input
+                  type="text"
+                  value={updatedName}
+                  onChange={(e) => setUpdatedName(e.target.value)}
+                  required
+                  placeholder="Enter your full name"
+                />
+              </div>
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  value={updatedEmail}
+                  onChange={(e) => setUpdatedEmail(e.target.value)}
+                  required
+                  placeholder="Enter your email"
+                />
+              </div>
+              <div className="form-group">
+                <label>Mobile</label>
+                <input
+                  type="tel"
+                  value={updatedMobile}
+                  onChange={(e) => setUpdatedMobile(e.target.value)}
+                  required
+                  placeholder="Enter your mobile number"
+                />
+              </div>
+              <button type="submit" disabled={loading}>
+                {loading ? 'Saving...' : 'Save Changes'}
+              </button>
+              <button onClick={() => setIsEditingPersonal(false)} disabled={loading}>
+                Cancel
+              </button>
+            </form>
+          ) : (
+            <>
+              <p><strong>Full Name:</strong> {currentUser.name}</p>
+              <p><strong>Email:</strong> {currentUser.email}</p>
+              <p><strong>Phone:</strong> {currentUser.mobile}</p>
+            </>
+          )}
+          
+           <div className="password-section">
+          <button className="edit-button" onClick={handleEditPassword}>Change Password</button>
+          {isEditingPassword ? (
+            <form onSubmit={handleUpdatePassword}>
+              <div className="form-group">
+                <label>Old Password</label>
+                <input
+                  type="password"
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                  required
+                  placeholder="Enter old password"
+                />
+              </div>
+              <div className="form-group">
+                <label>New Password</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  placeholder="Enter new password"
+                />
+              </div>
+              <button type="submit" disabled={loading}>
+                {loading ? 'Updating...' : 'Update Password'}
+              </button>
+              <button onClick={() => setIsEditingPassword(false)} disabled={loading}>
+                Cancel
+              </button>
+            </form>
+          ) : (
+            <span style={{ left: "20px", position: "relative"}}>Password is set. Click "Change Password" to update.</span>
+          )}
         </div>
+        </div>
+
+       
+
         <div className="shipping-address">
           <div className="info-stats">
-            <h3>Shipping Address</h3>
-            <button className="edit-button">Edit</button>
+            <h3>Shipping Addresses</h3>
+            <button className="edit-button" onClick={handleEditAddresses}>Manage Addresses</button>
           </div>
-          <p><strong>Home Address:</strong></p>
-          <p>{currentUser.address || 'Not provided'}</p>
+          {isEditingAddresses ? (
+            <form onSubmit={handleUpdateAddresses}>
+              {addresses.map((addr, index) => (
+                <div key={index} className="address-form">
+                  <h4>Address {index + 1}</h4>
+                  <div className="form-group">
+                    <label>Label</label>
+                    <input
+                      type="text"
+                      value={addr.label || ''}
+                      onChange={(e) => {
+                        const newAddresses = [...addresses];
+                        newAddresses[index].label = e.target.value;
+                        setAddresses(newAddresses);
+                      }}
+                      placeholder="Label (e.g., Home, Work)"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>House/Flat Number</label>
+                    <input
+                      type="text"
+                      value={addr.houseFlatNo || ''}
+                      onChange={(e) => {
+                        const newAddresses = [...addresses];
+                        newAddresses[index].houseFlatNo = e.target.value;
+                        setAddresses(newAddresses);
+                      }}
+                      placeholder="Enter house/flat number"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Building</label>
+                    <input
+                      type="text"
+                      value={addr.building || ''}
+                      onChange={(e) => {
+                        const newAddresses = [...addresses];
+                        newAddresses[index].building = e.target.value;
+                        setAddresses(newAddresses);
+                      }}
+                      placeholder="Enter building name"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Area</label>
+                    <input
+                      type="text"
+                      value={addr.area || ''}
+                      onChange={(e) => {
+                        const newAddresses = [...addresses];
+                        newAddresses[index].area = e.target.value;
+                        setAddresses(newAddresses);
+                      }}
+                      placeholder="Enter area"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>City</label>
+                    <input
+                      type="text"
+                      value={addr.city || ''}
+                      onChange={(e) => {
+                        const newAddresses = [...addresses];
+                        newAddresses[index].city = e.target.value;
+                        setAddresses(newAddresses);
+                      }}
+                      placeholder="Enter city"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>State</label>
+                    <input
+                      type="text"
+                      value={addr.state || ''}
+                      onChange={(e) => {
+                        const newAddresses = [...addresses];
+                        newAddresses[index].state = e.target.value;
+                        setAddresses(newAddresses);
+                      }}
+                      placeholder="Enter state"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Pin</label>
+                    <input
+                      type="text"
+                      value={addr.pin || ''}
+                      onChange={(e) => {
+                        const newAddresses = [...addresses];
+                        newAddresses[index].pin = e.target.value;
+                        setAddresses(newAddresses);
+                      }}
+                      placeholder="Enter pin code"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Country</label>
+                    <input
+                      type="text"
+                      value={addr.country || ''}
+                      onChange={(e) => {
+                        const newAddresses = [...addresses];
+                        newAddresses[index].country = e.target.value;
+                        setAddresses(newAddresses);
+                      }}
+                      placeholder="Enter country"
+                      required
+                    />
+                  </div>
+                  <hr />
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setAddresses([
+                    ...addresses,
+                    {
+                      label: '',
+                      houseFlatNo: '',
+                      building: '',
+                      area: '',
+                      city: '',
+                      state: '',
+                      pin: '',
+                      country: '',
+                      isDefault: false,
+                    },
+                  ]);
+                }}
+                disabled={loading}
+              >
+                Add New Address
+              </button>
+              <br />
+              <button type="submit" disabled={loading}>
+                {loading ? 'Saving...' : 'Save Addresses'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsEditingAddresses(false)}
+                disabled={loading}
+              >
+                Cancel
+              </button>
+            </form>
+          ) : (
+            <>
+              {addresses.length > 0 ? (
+                addresses.map((addr, index) => (
+                  <div key={index}>
+                    <p>
+                      <strong>{addr.label}:</strong>{' '}
+                      {`${addr.houseFlatNo || ''}${
+                        addr.building ? ', ' + addr.building : ''
+                      }${addr.area ? ', ' + addr.area : ''}${
+                        addr.city ? ', ' + addr.city : ''
+                      }${addr.state ? ', ' + addr.state : ''}${
+                        addr.pin ? ', ' + addr.pin : ''
+                      }${addr.country ? ', ' + addr.country : ''}`}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p>No addresses saved.</p>
+              )}
+            </>
+          )}
         </div>
+
         <div className="recent-orders">
           <h3>Recent Orders</h3>
           {orders.length > 0 ? (
@@ -467,27 +920,7 @@ const Profile = () => {
           )}
           <Link to="/orders" className="view-all-orders">View All Orders</Link>
         </div>
-        <div className="favorites-section">
-          <h3>Your Favorites</h3>
-          <div className="favorites-list">
-            {favorites.length > 0 ? (
-              favorites.map(fav => (
-                <div key={fav.product._id} className="favorite-item">
-                  <Link to={`/products/${fav.product._id}`}>
-                    <p>{fav.product.name}</p>
-                  </Link>
-                </div>
-              ))
-            ) : (
-              <p>You have no favorite items yet.</p>
-            )}
-            <button>
-              <Link to="/favorites" className="view-favorites-btn">
-                View All Favorites
-              </Link>
-            </button>
-          </div>
-        </div>
+
 
         <div className="browser-Buttons">
           <p style={{ fontSize: "20px", fontWeight: "bold" }}>Quick Actions</p>

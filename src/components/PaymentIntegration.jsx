@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { loadScript } from '../utils/loadScript'; // Utility to load external scripts dynamically
 import { customerOrderApi } from '../api/customer_api';
 

@@ -1,86 +1,179 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom'; // Added useParams
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import '../styleSheets/buynowpage.css';
-import { customerProductApi, customerOrderApi } from '../api/customer_api'; // Import customer APIs
-import { useDispatch } from 'react-redux';
+import { customerProductApi, customerOrderApi } from '../api/customer_api';
+import { useDispatch, useSelector } from 'react-redux';
 import { clearCart } from '../store/cartSlice';
+import { fetchUser } from '../store/userSlice';
 import PaymentIntegration from './PaymentIntegration';
 
 const BuyNow = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { productId: urlProductId } = useParams(); // Get product ID from URL if directly accessed
+    const { productId: urlProductId } = useParams();
     const dispatch = useDispatch();
 
+    const { currentUser, isAuthenticated } = useSelector(state => state.user);
+
     const [currentStep, setCurrentStep] = useState(1);
-    const [product, setProduct] = useState(null); // State to store product details
-    const [selectedSize, setSelectedSize] = useState(location.state?.selectedSize || '');
-    const [quantity, setQuantity] = useState(1);
-    const [shippingCost, setShippingCost] = useState(0); // 0 for FREE
+    const [cartItems, setCartItems] = useState(location.state?.cartItems || []);
+    const [shippingCost, setShippingCost] = useState(0);
     const [paymentMethod, setPaymentMethod] = useState('card');
     const [showModal, setShowModal] = useState(false);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(cartItems.length === 0);
     const [error, setError] = useState(null);
     const [orderId, setOrderId] = useState(null);
 
     // Shipping Address State
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
+    const [shippingAddress, setShippingAddress] = useState({
+        houseFlatNo: '',
+        building: '',
+        area: '',
+        city: '',
+        pin: '',
+        state: '',
+        country: '',
+    });
     const [address, setAddress] = useState('');
-    const [city, setCity] = useState('');
-    const [postalCode, setPostalCode] = useState('');
-    const [country, setCountry] = useState('');
 
+    // User data and address selection
+    const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
+    const [useNewAddress, setUseNewAddress] = useState(false);
+    const [receiverPhone, setReceiverPhone] = useState('');
+    const [useDifferentReceiver, setUseDifferentReceiver] = useState(false);
+    const [receiverFirstName, setReceiverFirstName] = useState('');
+    const [receiverLastName, setReceiverLastName] = useState('');
+    const [newAddressLabel, setNewAddressLabel] = useState('Home');
+    const [saveNewAddress, setSaveNewAddress] = useState(false);
+
+    // Fetch user data if authenticated and not available
     useEffect(() => {
-        const fetchProductDetails = async () => {
+        if (isAuthenticated && !currentUser) {
+            dispatch(fetchUser());
+        }
+    }, [isAuthenticated, currentUser, dispatch]);
+
+    // Pre-fill form with user data
+    useEffect(() => {
+        if (currentUser) {
+            const nameParts = currentUser.name ? currentUser.name.split(' ') : ['', ''];
+            setFirstName(nameParts[0] || '');
+            setLastName(nameParts.slice(1).join(' ') || '');
+
+            // Set default address if available
+            if (currentUser.addresses && currentUser.addresses.length > 0) {
+                const defaultAddress = currentUser.addresses.find(addr => addr.isDefault) || currentUser.addresses[0];
+            setShippingAddress({
+                houseFlatNo: defaultAddress.house || '',
+                building: '',
+                area: defaultAddress.area || '',
+                city: defaultAddress.city || '',
+                pin: defaultAddress.postalCode || '',
+                state: defaultAddress.state || '',
+                country: defaultAddress.country || '',
+            });
+            const builtAddress = `${defaultAddress.house || ''}, ${defaultAddress.area || ''}, ${defaultAddress.city || ''}, ${defaultAddress.postalCode || ''}, ${defaultAddress.state || ''}, ${defaultAddress.country || ''}`.replace(/^, |, $/, '').replace(/, ,/g, ',').trim();
+            setAddress(builtAddress);
+                setSelectedAddressIndex(currentUser.addresses.findIndex(addr => addr.isDefault) || 0);
+            }
+
+            // Set receiver phone to user's phone by default
+            setReceiverPhone(currentUser.mobile || '');
+        }
+    }, [currentUser]);
+
+    // Fetch product details for each item if needed
+    useEffect(() => {
+        const fetchMissingProductDetails = async () => {
             setLoading(true);
             setError(null);
             try {
-                let currentProduct = location.state?.product;
-
-                // If product not in location.state, try fetching from API using URL productId
-                if (!currentProduct && urlProductId) {
-                    currentProduct = await customerProductApi.getById(urlProductId);
-                }
-
-                if (currentProduct) {
-                    setProduct(currentProduct);
-                    // Set default size if available and not already selected
-                    if (!selectedSize && currentProduct.sizes && currentProduct.sizes.length > 0) {
-                        setSelectedSize(currentProduct.sizes[0]);
+                const updatedItems = await Promise.all(cartItems.map(async (item) => {
+                    if (!item.product.name || !item.product.sizes) {
+                        const fetchedProduct = await customerProductApi.getById(item.product._id || item.product.id);
+                        return {
+                            ...item,
+                            product: fetchedProduct,
+                        };
                     }
-                } else {
-                    setError("Product details not found. Redirecting to home.");
-                    setTimeout(() => navigate('/'), 2000); // Redirect after message
-                }
+                    return item;
+                }));
+                setCartItems(updatedItems);
             } catch (err) {
                 console.error("Failed to fetch product details for BuyNow:", err);
                 setError("Failed to load product details. Please try again.");
-                setTimeout(() => navigate('/'), 2000); // Redirect on error
+                setTimeout(() => navigate('/'), 2000);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchProductDetails();
-    }, [location.state, navigate, urlProductId, selectedSize]); // Added selectedSize to dependencies
+        if (cartItems.length > 0) {
+            fetchMissingProductDetails();
+        } else if (urlProductId) {
+            const fetchSingleProduct = async () => {
+                setLoading(true);
+                setError(null);
+                try {
+                    const product = await customerProductApi.getById(urlProductId);
+                    setCartItems([{
+                        product,
+                        selectedSize: product.sizes && product.sizes.length > 0 ? product.sizes[0] : '',
+                        quantity: 1,
+                    }]);
+                } catch (err) {
+                    console.error("Failed to fetch product details for BuyNow:", err);
+                    setError("Failed to load product details. Please try again.");
+                    setTimeout(() => navigate('/'), 2000);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchSingleProduct();
+        } else {
+            setLoading(false);
+        }
+    }, [cartItems.length, location.state, navigate, urlProductId]);
 
     // Render loading or error state early
     if (loading) {
         return <div className="buy-now-loading">Loading product details...</div>;
     }
 
-    if (error || !product) {
-        return <div className="buy-now-error">{error || "Product not available."}</div>;
+    if (error || cartItems.length === 0) {
+        return <div className="buy-now-error">{error || "No products available."}</div>;
     }
 
-    // Now 'product' is guaranteed to be available
-    const subtotal = product.price * quantity;
+    // Calculate subtotal, tax, total for all items
+    const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
     const tax = Math.round(subtotal * 0.12);
     const total = subtotal + tax + shippingCost;
 
-    const changeQuantity = (amount) => {
-        setQuantity(prev => Math.max(1, Math.min(10, prev + amount)));
+    const changeQuantity = (index, amount) => {
+        setCartItems(prevItems => {
+            const newItems = [...prevItems];
+            const newQuantity = Math.max(1, Math.min(10, newItems[index].quantity + amount));
+            newItems[index].quantity = newQuantity;
+            return newItems;
+        });
+    };
+
+    const changeSelectedSize = (index, size) => {
+        setCartItems(prevItems => {
+            const newItems = [...prevItems];
+            newItems[index].selectedSize = size;
+            return newItems;
+        });
+    };
+
+    const deselectItem = (index) => {
+        setCartItems(prevItems => {
+            const newItems = [...prevItems];
+            newItems.splice(index, 1);
+            return newItems;
+        });
     };
 
     const handleStepNavigation = (step) => {
@@ -90,21 +183,26 @@ const BuyNow = () => {
 
     const completeOrder = async (e) => {
         e.preventDefault();
-        // Here you would collect all order details (product, size, quantity, shipping, payment)
+        if (cartItems.length === 0) {
+            setError("No items selected for order.");
+            return;
+        }
+        const orderItems = cartItems.map(item => ({
+            product: item.product._id || item.product.id,
+            name: item.product.name,
+            imageUrl: item.product.imageUrl || (item.product.images && item.product.images[0]) || '',
+            quantity: item.quantity,
+            price: item.product.price,
+            size: item.selectedSize,
+        }));
+
+        // Use address string directly
         const orderDetails = {
-            orderItems: [{
-                product: product._id,
-                name: product.name,
-                imageUrl: product.imageUrl,
-                quantity: quantity,
-                price: product.price,
-            }],
+            orderItems,
             shippingAddress: {
                 address: address,
-                city: city,
-                postalCode: postalCode,
-                country: country,
             },
+            receiverPhone: receiverPhone,
             paymentMethod,
             taxPrice: tax,
             shippingPrice: shippingCost,
@@ -112,18 +210,13 @@ const BuyNow = () => {
         };
 
         try {
-            // Call your backend API to place the order
             const response = await customerOrderApi.placeOrder(orderDetails);
             console.log("Order placed successfully:", response);
             setOrderId(response._id);
 
             if (paymentMethod === 'cod') {
-                // For COD, directly show success modal
                 dispatch(clearCart());
                 setShowModal(true);
-            } else {
-                // For online payment, initiate Razorpay
-                // The PaymentIntegration component will handle the payment
             }
         } catch (err) {
             console.error("Failed to place order:", err);
@@ -142,7 +235,7 @@ const BuyNow = () => {
 
     const closeModal = () => {
         setShowModal(false);
-        navigate('/'); // Redirect to home after closing modal
+        navigate('/');
     };
 
     const renderStepIndicator = () => (
@@ -169,56 +262,58 @@ const BuyNow = () => {
                 {currentStep === 1 && (
                     <div className="checkout-step active">
                         <div className="step-grid">
-                            <div className="product-image-section">
-                                <div className="product-image-bg">
-                                    {/* Using product.imageUrl from backend */}
-                                    <img
-                                        src={`http://localhost:5000${product.imageUrl}`}
-                                        alt={product.name}
-                                        className="product-image"
-                                        onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/400x400/cccccc/000000?text=No+Image"; }}
-                                    />
-                                </div>
-                            </div>
-                            <div className="product-details-section">
-                                <h1 className="product-title gradient-text">{product.name}</h1> {/* Use product.name */}
-                                <p className="product-description">{product.description}</p>
-                                <div className="product-price-info">
-                                    <span className="price">₹{product.price.toFixed(2)}</span> {/* Use product.price */}
-                                    {/* Removed original_price as it's not in your backend product schema */}
-                                </div>
-                                <div className="product-options">
-                                    <h3 className="options-title">Select Size</h3>
-                                    <div className="size-selector">
-                                        {product.sizes && product.sizes.length > 0 ? (
-                                            product.sizes.map(size => (
-                                                <div key={size} className={`size-option glass-card ${selectedSize === size ? 'selected' : ''}`} onClick={() => setSelectedSize(size)}>
-                                                    {size}
+                            <div className="product-list-section">
+                                {cartItems.length === 0 ? (
+                                    <p>No items selected.</p>
+                                ) : (
+                                    cartItems.map((item, index) => (
+                                        <div key={`${item.product._id}-${index}`} className="product-item">
+                                            <div className="product-image-bg">
+                                                <img
+                                                    src={item.product.images && item.product.images.length > 0 ? `http://localhost:5000${item.product.images[0]}` : `http://localhost:5000${item.product.imageUrl}`}
+                                                    alt={item.product.name}
+                                                    className="product-image"
+                                                />
+                                            </div>
+                                            <div className="product-details">
+                                                <h3 className="product-name">{item.product.name}</h3>
+                                                <p className="product-description">{item.product.description}</p>
+                                                <div className="size-selector">
+                                                    <h4>Select Size</h4>
+                                                    {item.product.sizes && item.product.sizes.length > 0 ? (
+                                                        item.product.sizes.map(sizeObj => {
+                                                            const sizeValue = typeof sizeObj === 'object' ? sizeObj.size : sizeObj;
+                                                            return (
+                                                                <button
+                                                                    key={sizeValue}
+                                                                    className={`size-option ${item.selectedSize === sizeValue ? 'selected' : ''}`}
+                                                                    onClick={() => changeSelectedSize(index, sizeValue)}
+                                                                >
+                                                                    {sizeValue}
+                                                                </button>
+                                                            );
+                                                        })
+                                                    ) : (
+                                                        <p>No sizes available.</p>
+                                                    )}
                                                 </div>
-                                            ))
-                                        ) : (
-                                            <p>No sizes available.</p>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="product-options">
-                                    <h3 className="options-title">Quantity</h3>
-                                    <div className="quantity-selector">
-                                        <button className="quantity-btn glass-card" onClick={() => changeQuantity(-1)}>-</button>
-                                        <span className="quantity-display">{quantity}</span>
-                                        <button className="quantity-btn glass-card" onClick={() => changeQuantity(1)}>+</button>
-                                    </div>
-                                </div>
-                                <div className="action-buttons">
-                                    <button
-                                        className="btn-unique full-width"
-                                        onClick={() => handleStepNavigation(2)}
-                                        disabled={!selectedSize} // Disable if no size is selected
-                                    >
-                                        <span>Continue to Checkout</span>
-                                    </button>
-                                </div>
+                                                <div className="quantity-selector">
+                                                    <h4>Quantity</h4>
+                                                    <button onClick={() => changeQuantity(index, -1)}>-</button>
+                                                    <span>{item.quantity}</span>
+                                                    <button onClick={() => changeQuantity(index, 1)}>+</button>
+                                                </div>
+                                                <button className="deselect-btn" onClick={() => deselectItem(index)}>Remove Item</button>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
                             </div>
+                        </div>
+                        <div className="nav-buttons center-button">
+                            <button className="btn-unique nav-btn" onClick={() => handleStepNavigation(2)}>
+                                <span>Continue to Shipping →</span>
+                            </button>
                         </div>
                     </div>
                 )}
@@ -235,34 +330,210 @@ const BuyNow = () => {
                                 <div className="form-container">
                                     <div className="morphism-card form-card">
                                         <form className="form-content">
-                                            <div className="form-grid-two-col">
-                                                <div>
-                                                    <label className="form-label">First Name *</label>
-                                                    <input type="text" required className="form-input" placeholder="Enter first name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-                                                </div>
-                                                <div>
-                                                    <label className="form-label">Last Name *</label>
-                                                    <input type="text" required className="form-input" placeholder="Enter last name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label className="form-label">Address Line 1 *</label>
-                                                <input type="text" required className="form-input" placeholder="House/Flat number, Street name" value={address} onChange={(e) => setAddress(e.target.value)} />
-                                            </div>
-                                            <div className="form-grid-two-col">
-                                                <div>
-                                                    <label className="form-label">City *</label>
-                                                    <input type="text" required className="form-input" placeholder="Enter city" value={city} onChange={(e) => setCity(e.target.value)} />
-                                                </div>
-                                                <div>
-                                                    <label className="form-label">Postal Code *</label>
-                                                    <input type="text" required className="form-input" placeholder="Enter postal code" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
+                                            {/* User Details Section */}
+                                            <div className="form-section">
+                                                <h4 className="section-title">Contact Information</h4>
+                                                <div className="form-grid-two-col">
+                                                    <div>
+                                                        <label className="form-label">First Name *</label>
+                                                        <input type="text" required className="form-input" placeholder="Enter first name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                                                    </div>
+                                                    <div>
+                                                        <label className="form-label">Last Name *</label>
+                                                        <input type="text" required className="form-input" placeholder="Enter last name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div>
-                                                <label className="form-label">Country *</label>
-                                                <input type="text" required className="form-input" placeholder="Enter country" value={country} onChange={(e) => setCountry(e.target.value)} />
-                                            </div>
+
+                                            {/* Address Selection Section */}
+                                            <div className="form-section">
+                                                <h4 className="section-title">Delivery Address</h4>
+
+                                                {/* Saved Addresses */}
+                                                {isAuthenticated && currentUser?.addresses && currentUser.addresses.length > 0 && (
+                                                    <div className="address-selection">
+                                                        <h5>Select from saved addresses:</h5>
+                                                        <div className="address-options">
+                                                            {currentUser.addresses.map((addr, index) => (
+                                                                <label key={index} className={`address-option glass-card ${selectedAddressIndex === index && !useNewAddress ? 'selected' : ''}`}>
+                                                                    <input
+                                                                        type="radio"
+                                                                        name="savedAddress"
+                                                                        checked={selectedAddressIndex === index && !useNewAddress}
+                                                                        onChange={() => {
+                                                                            setSelectedAddressIndex(index);
+                                                                                setSelectedAddressIndex(index);
+                                                                                setUseNewAddress(false);
+                                                                                setAddress(addr.address || '');
+                                                                            }}
+                                                                        />
+                                                                        <div className="address-details">
+                                                                            <strong>{addr.label}</strong>
+                                                                            <p>{addr.address}</p>
+                                                                            {addr.isDefault && <span className="default-badge">Default</span>}
+                                                                        </div>
+                                                                    </label>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* New Address Option */}
+                                                    <div className="new-address-toggle">
+                                                        <label className="checkbox-label">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={useNewAddress}
+                                                                onChange={(e) => setUseNewAddress(e.target.checked)}
+                                                            />
+                                                            <span>Use a different address</span>
+                                                        </label>
+                                                    </div>
+
+                                                    {/* Address Form */}
+                                                    {(useNewAddress || !isAuthenticated || !currentUser?.addresses || currentUser.addresses.length === 0) && (
+                                                        <div className="address-form">
+                                                            {/* Structured Address Fields */}
+                                                            <div className="form-grid-two-col">
+                                                                <div>
+                                                                    <label className="form-label">House/Flat No. *</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        required
+                                                                        className="form-input"
+                                                                        placeholder="Enter house/flat number"
+                                                                        value={shippingAddress.houseFlatNo}
+                                                                        onChange={(e) => setShippingAddress(prev => ({ ...prev, houseFlatNo: e.target.value }))}
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="form-label">Building/Apartment *</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        required
+                                                                        className="form-input"
+                                                                        placeholder="Enter building name"
+                                                                        value={shippingAddress.building}
+                                                                        onChange={(e) => setShippingAddress(prev => ({ ...prev, building: e.target.value }))}
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                            <div>
+                                                                <label className="form-label">Area/Street *</label>
+                                                                <input
+                                                                    type="text"
+                                                                    required
+                                                                    className="form-input"
+                                                                    placeholder="Enter area or street name"
+                                                                    value={shippingAddress.area}
+                                                                    onChange={(e) => setShippingAddress(prev => ({ ...prev, area: e.target.value }))}
+                                                                />
+                                                            </div>
+                                                            <div className="form-grid-two-col">
+                                                                <div>
+                                                                    <label className="form-label">City *</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        required
+                                                                        className="form-input"
+                                                                        placeholder="Enter city"
+                                                                        value={shippingAddress.city}
+                                                                        onChange={(e) => setShippingAddress(prev => ({ ...prev, city: e.target.value }))}
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="form-label">PIN Code *</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        required
+                                                                        className="form-input"
+                                                                        placeholder="Enter PIN code"
+                                                                        value={shippingAddress.pin}
+                                                                        onChange={(e) => setShippingAddress(prev => ({ ...prev, pin: e.target.value }))}
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                            <div className="form-grid-two-col">
+                                                                <div>
+                                                                    <label className="form-label">State *</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        required
+                                                                        className="form-input"
+                                                                        placeholder="Enter state"
+                                                                        value={shippingAddress.state}
+                                                                        onChange={(e) => setShippingAddress(prev => ({ ...prev, state: e.target.value }))}
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="form-label">Country *</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        required
+                                                                        className="form-input"
+                                                                        placeholder="Enter country"
+                                                                        value={shippingAddress.country}
+                                                                        onChange={(e) => setShippingAddress(prev => ({ ...prev, country: e.target.value }))}
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                            {useNewAddress && (
+                                                                <div className="form-grid-two-col">
+                                                                    <div>
+                                                                        <label className="form-label">Address Label</label>
+                                                                        <select className="form-input" value={newAddressLabel} onChange={(e) => setNewAddressLabel(e.target.value)}>
+                                                                            <option value="Home">Home</option>
+                                                                            <option value="Work">Work</option>
+                                                                            <option value="Other">Other</option>
+                                                                        </select>
+                                                                    </div>
+                                                                    <div className="checkbox-container">
+                                                                        <label className="checkbox-label">
+                                                                            <input
+                                                                                type="checkbox"
+                                                                                checked={saveNewAddress}
+                                                                                onChange={(e) => setSaveNewAddress(e.target.checked)}
+                                                                            />
+                                                                            <span>Save this address</span>
+                                                                        </label>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Receiver Phone Section */}
+                                                <div className="form-section">
+                                                    <h4 className="section-title">Receiver Details</h4>
+                                                    <div className="receiver-phone-section">
+                                                        <label className="checkbox-label">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={useDifferentReceiver}
+                                                                onChange={(e) => setUseDifferentReceiver(e.target.checked)}
+                                                            />
+                                                            <span>Receiver is different from buyer</span>
+                                                        </label>
+                                                        <div>
+                                                            <label className="form-label">Receiver Phone Number *</label>
+                                                            <input
+                                                                type="tel"
+                                                                required
+                                                                className="form-input"
+                                                                placeholder="Enter receiver's phone number"
+                                                                value={receiverPhone}
+                                                                onChange={(e) => setReceiverPhone(e.target.value)}
+                                                                disabled={!useDifferentReceiver && isAuthenticated}
+                                                            />
+                                                            {!useDifferentReceiver && isAuthenticated && (
+                                                                <small className="form-hint">Using your registered phone number</small>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            {/* Delivery Options */}
                                             <div className="delivery-options">
                                                 <h4 className="options-title">Delivery Options</h4>
                                                 <div className="radio-group">
@@ -271,7 +542,6 @@ const BuyNow = () => {
                                                         <div className="option-details">
                                                             <p>Standard Delivery</p>
                                                             <small>5-7 business days</small>
-
                                                         </div>
                                                         <span className="option-price free">FREE</span>
                                                     </label>
@@ -371,7 +641,6 @@ const BuyNow = () => {
                         </div>
                     </div>
                 )}
-
             </main>
 
             {/* Payment Integration */}
@@ -380,7 +649,7 @@ const BuyNow = () => {
                     orderDetails={{
                         _id: orderId,
                         totalPrice: total,
-                        userEmail: 'user@example.com', // You should get this from user state
+                        userEmail: 'user@example.com',
                     }}
                     onSuccess={handlePaymentSuccess}
                     onError={handlePaymentError}

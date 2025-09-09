@@ -41,51 +41,32 @@ const Cart = () => {
 
   const handleCheckout = async () => {
     if (cartItems.length === 0) {
-      // alert("Your cart is empty!"); // Consider a custom modal
       return;
     }
 
     try {
-      // In a real application, you'd send cartItems to your backend for processing.
-      // This is a simplified example.
-      // const orderData = {
-      //   items: cartItems.map(item => ({
-      //     productId: item._id, 
-      //     quantity: item.quantity,
-      //     priceAtTimeOfPurchase: item.price, 
-      //   })),
-      //   totalAmount: cartTotal,
-      // };
-      // const response = await customerOrderApi.placeOrder(orderData);
-      // console.log("Order placed successfully:", response);
-
-      // For now, simulate checkout success and redirect to BuyNow for the first item
-      // In a real app, you'd integrate with a full checkout flow, possibly passing the entire cart.
       const validCartItems = cartItems.filter(item => item.product);
-      const firstCartItem = validCartItems[0];
-      if (firstCartItem) {
-        // Clear cart after "successful" checkout initiation (if backend confirms order)
-        // dispatch(clearCart()); // Clear cart in Redux
-        navigate(`/buynow/${firstCartItem.product._id}`, { // Pass product ID in URL
+      if (validCartItems.length > 0) {
+        // Prepare items to pass to BuyNow page
+        const itemsForBuyNow = validCartItems.map(item => ({
+          product: {
+            ...item.product,
+            name: item.product.name,
+            imageUrl: item.product.imageUrl || item.product.image,
+            sizes: item.product.sizes || ['S', 'M', 'L', 'XL'], // fallback sizes
+          },
+          selectedSize: item.size,
+          quantity: item.quantity,
+        }));
+
+        navigate('/buynow/multi', { // Use a generic route or special route for multi-item buy now
           state: {
-            product: {
-              ...firstCartItem.product,
-              // Ensure product has all needed fields for BuyNow from Redux item
-              name: firstCartItem.product.name,
-              imageUrl: firstCartItem.product.image,
-              sizes: ['S', 'M', 'L', 'XL'] // Example sizes if not stored in cart item
-            },
-            selectedSize: 'M', // Example default size
-            quantity: firstCartItem.quantity
+            cartItems: itemsForBuyNow,
           }
         });
-      } else {
-        // alert("Cart is empty!"); // Consider a custom modal
       }
-      
     } catch (error) {
       console.error("Checkout failed:", error);
-      // alert("Checkout failed. Please try again."); // Consider a custom modal
     }
   };
 
@@ -109,7 +90,7 @@ const Cart = () => {
           {cartItems.filter(item => item.product).map((item, index) => (
             <div className={`cart-item card-${index + 1}`} key={`${item.product._id}-${item.size}`}>
               <img
-                src={`http://localhost:5000${item.product.image}`}
+                src={`http://localhost:5000${item.product.imageUrl}`}
                 alt={item.product.name}
                 className="cart-item-image"
                 onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/100x100/cccccc/000000?text=No+Image"; }}

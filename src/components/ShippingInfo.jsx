@@ -1,9 +1,10 @@
 import React from 'react';
+import '../styleSheets/ShippingInfo.css';
 
 const ShippingInfo = () => (
-  <div style={{ padding: '20px' }}>
-    <h1>Shipping Info</h1>
-    <p>This is a placeholder for the shipping info page.</p>
+  <div className="shipping-info-container">
+    <h1 className="shipping-info-title">Shipping Info</h1>
+    <p className="shipping-info-content">This is a placeholder for the shipping info page.</p>
   </div>
 );
 

@@ -5,7 +5,7 @@ import { useFavorites } from '../hooks/useFavorites';
 import '../styleSheets/favorites.css';
 
 const Favorites = () => {
-  const { favorites, removeFavorite } = useFavorites();
+  const { favorites, removeFavorite, favoritesCount } = useFavorites();
 
   if (favorites.length === 0) {
     return (
@@ -32,9 +32,10 @@ const Favorites = () => {
           <div key={product._id} className="favorite-item-card">
             <Link to={`/product/${product._id}`}>
               <img
-                src={`http://localhost:5000${product.imageUrl}`}
+                src={`http://localhost:5000${product.images && product.images.length > 0 ? product.images[0] : product.imageUrl}`}
                 alt={product.name}
                 className="favorite-item-image"
+                onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/200x200/cccccc/000000?text=No+Image"; }}
               />
             </Link>
 

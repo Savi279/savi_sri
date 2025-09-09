@@ -17,17 +17,38 @@ export const useFavorites = () => {
   
   // Fetch favorites on component mount (or when user logs in)
   useEffect(() => {
-    // You might want to conditionally dispatch this based on user authentication status
-    // For now, it fetches when the hook is used.
-    dispatch(fetchFavorites()); 
+    // Only fetch favorites if user is logged in
+    const token = localStorage.getItem('token');
+    console.log('useFavorites - token:', token);
+    if (token) {
+      dispatch(fetchFavorites())
+        .unwrap()
+        .then((res) => {
+          console.log('fetchFavorites success:', res);
+        })
+        .catch((err) => {
+          console.error('fetchFavorites error:', err);
+        });
+    }
   }, [dispatch]);
 
-  const addFavorite = (productId) => dispatch(addToFavorites(productId));
+  const addFavorite = (productId) => {
+    console.log('addFavorite called with productId:', productId);
+    dispatch(addToFavorites(productId))
+      .unwrap()
+      .then((res) => {
+        console.log('addToFavorites success:', res);
+      })
+      .catch((err) => {
+        console.error('addToFavorites error:', err);
+      });
+  };
   const removeFavorite = (productId) => dispatch(removeFromFavorites(productId));
   
-  // toggleFavorite will now dispatch either add or remove based on current state
+  // toggleFavorite will check current state and dispatch appropriate action
   const toggleFavorite = (productId) => {
-    if (selectIsFavorite(favorites, productId)) { // Check if it's currently a favorite
+    const isFavorite = favorites.some(item => item._id === productId);
+    if (isFavorite) {
       dispatch(removeFromFavorites(productId));
     } else {
       dispatch(addToFavorites(productId));

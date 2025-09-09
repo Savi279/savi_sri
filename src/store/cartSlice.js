@@ -61,7 +61,7 @@ export const clearCart = createAsyncThunk(
     try {
       // Assuming backend has a clear cart endpoint, or we can remove items one by one
       // For now, we'll handle it client-side
-      return;
+      // No return needed, just resolve
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -95,7 +95,7 @@ const cartSlice = createSlice({
       .addCase(fetchCart.fulfilled, (state, action) => {
         state.loading = false;
         state.items = (action.payload.products || []).filter(item => item.product); // Filter out items with null product
-        state.total = state.items.reduce((sum, item) => sum + ((item.product?.price || 0) * item.quantity), 0);
+        state.total = state.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       })
       .addCase(fetchCart.rejected, (state, action) => {
         state.loading = false;
@@ -109,7 +109,7 @@ const cartSlice = createSlice({
         state.loading = false;
         // Update items and total based on response
         state.items = (action.payload.products || []).filter(item => item.product); // Filter out items with null product
-        state.total = state.items.reduce((sum, item) => sum + ((item.product?.price || 0) * item.quantity), 0);
+        state.total = state.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       })
       .addCase(addToCart.rejected, (state, action) => {
         state.loading = false;
@@ -124,7 +124,7 @@ const cartSlice = createSlice({
         // Update items from response
         state.items = (action.payload.products || []).filter(item => item.product); // Filter out items with null product
         // Recalculate total
-        state.total = state.items.reduce((sum, item) => sum + ((item.product?.price || 0) * item.quantity), 0);
+        state.total = state.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       })
       .addCase(removeFromCart.rejected, (state, action) => {
         state.loading = false;
@@ -138,7 +138,7 @@ const cartSlice = createSlice({
         state.loading = false;
         // Update items from response
         state.items = (action.payload.products || []).filter(item => item.product); // Filter out items with null product
-        state.total = state.items.reduce((sum, item) => sum + ((item.product?.price || 0) * item.quantity), 0);
+        state.total = state.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       })
       .addCase(updateCartItemQuantity.rejected, (state, action) => {
         state.loading = false;

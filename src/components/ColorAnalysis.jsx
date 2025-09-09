@@ -1,10 +1,95 @@
-import React, { useState, useEffect } from 'react';
-import {useSelector } from 'react-redux';
+import React, { useState, useEffect, useRef } from 'react';
+import { useSelector } from 'react-redux';
 import { customerColorAnalysisApi } from '../api/customer_api';
-import '../styleSheets/ColorAnalysis.css'; // You'll need to create this CSS file
+import '../styleSheets/ColorAnalysis.css';
+import LoadingSpinner from './LoadingSpinner';
+
+const colorOptions = {
+  skinTone: [
+    { value: 'fair', name: 'Fair - Very Light Skin', color: '#fce4d6' },
+    { value: 'light', name: 'Light - Light Beige', color: '#f9d5b3' },
+    { value: 'medium', name: 'Medium - Olive Beige', color: '#d2a679' },
+    { value: 'tan', name: 'Tan - Golden Brown', color: '#b97a57' },
+    { value: 'dark', name: 'Dark - Deep Brown', color: '#6b4226' },
+  ],
+  hairColor: [
+    { value: 'blonde', name: 'Blonde - Golden Yellow', color: '#f3e5ab' },
+    { value: 'brown', name: 'Brown - Chestnut', color: '#6f4e37' },
+    { value: 'black', name: 'Black - Jet Black', color: '#1c1c1c' },
+    { value: 'red', name: 'Red - Auburn', color: '#b22222' },
+    { value: 'grey', name: 'Grey - Silver', color: '#a9a9a9' },
+  ],
+  eyeColor: [
+    { value: 'blue', name: 'Blue - Sky Blue', color: '#3b5998' },
+    { value: 'green', name: 'Green - Forest Green', color: '#228b22' },
+    { value: 'brown', name: 'Brown - Chocolate', color: '#654321' },
+    { value: 'hazel', name: 'Hazel - Golden Brown', color: '#8e7618' },
+    { value: 'grey', name: 'Grey - Steel Grey', color: '#808080' },
+  ],
+};
+
+const Dropdown = ({ label, options, selectedValue, onChange }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const handleToggle = () => setIsOpen(!isOpen);
+
+  const handleOptionClick = (value) => {
+    onChange(value);
+    setIsOpen(false);
+  };
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(opt => opt.value === selectedValue);
+
+  return (
+    <div className="form-group custom-dropdown" ref={dropdownRef}>
+      <label>{label}</label>
+      <button type="button" className="dropdown-toggle" onClick={handleToggle} aria-haspopup="listbox" aria-expanded={isOpen}>
+        {selectedOption ? (
+          <>
+            <span className="color-dot" style={{ backgroundColor: selectedOption.color }}></span>
+            {selectedOption.name}
+          </>
+        ) : (
+          'Select...'
+        )}
+        <span className="dropdown-arrow">&#9662;</span>
+      </button>
+      {isOpen && (
+        <ul className="dropdown-menu" role="listbox">
+          {options.map((opt) => (
+            <li
+              key={opt.value}
+              role="option"
+              aria-selected={opt.value === selectedValue}
+              className={`dropdown-item ${opt.value === selectedValue ? 'selected' : ''}`}
+              onClick={() => handleOptionClick(opt.value)}
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleOptionClick(opt.value); }}
+            >
+              <span className="color-dot" style={{ backgroundColor: opt.color }}></span>
+              {opt.name}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+};
 
 const ColorAnalysis = () => {
-  const user = useSelector(state => state.user.currentUser); // Assuming user is stored in Redux
+  const user = useSelector(state => state.user.currentUser);
 
   const [skinTone, setSkinTone] = useState('');
   const [hairColor, setHairColor] = useState('');
@@ -28,7 +113,6 @@ const ColorAnalysis = () => {
             setProfileExists(true);
           }
         } catch (err) {
-          // Profile might not exist, which is fine
           if (err.message === 'Color profile not found for this user') {
             setProfileExists(false);
           } else {
@@ -75,42 +159,24 @@ const ColorAnalysis = () => {
       ) : (
         <>
           <form onSubmit={handleSubmit} className="color-analysis-form">
-            <div className="form-group">
-              <label htmlFor="skinTone">What is your skin tone?</label>
-              <select id="skinTone" value={skinTone} onChange={(e) => setSkinTone(e.target.value)} required>
-                <option value="">Select...</option>
-                <option value="fair">Fair</option>
-                <option value="light">Light</option>
-                <option value="medium">Medium</option>
-                <option value="tan">Tan</option>
-                <option value="dark">Dark</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="hairColor">What is your natural hair color?</label>
-              <select id="hairColor" value={hairColor} onChange={(e) => setHairColor(e.target.value)} required>
-                <option value="">Select...</option>
-                <option value="blonde">Blonde</option>
-                <option value="brown">Brown</option>
-                <option value="black">Black</option>
-                <option value="red">Red</option>
-                <option value="grey">Grey</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="eyeColor">What is your eye color?</label>
-              <select id="eyeColor" value={eyeColor} onChange={(e) => setEyeColor(e.target.value)} required>
-                <option value="">Select...</option>
-                <option value="blue">Blue</option>
-                <option value="green">Green</option>
-                <option value="brown">Brown</option>
-                <option value="hazel">Hazel</option>
-                <option value="grey">Grey</option>
-              </select>
-            </div>
-
+            <Dropdown
+              label="What is your skin tone?"
+              options={colorOptions.skinTone}
+              selectedValue={skinTone}
+              onChange={setSkinTone}
+            />
+            <Dropdown
+              label="What is your natural hair color?"
+              options={colorOptions.hairColor}
+              selectedValue={hairColor}
+              onChange={setHairColor}
+            />
+            <Dropdown
+              label="What is your eye color?"
+              options={colorOptions.eyeColor}
+              selectedValue={eyeColor}
+              onChange={setEyeColor}
+            />
             <button type="submit" disabled={loading}>
               {profileExists ? 'Update Analysis' : 'Get My Colors'}
             </button>

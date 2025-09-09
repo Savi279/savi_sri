@@ -15,7 +15,7 @@ const Home = () => {
         const response = await customerCategoryApi.getAll();
         setCategories(response);
       } catch (err) {
-        console.error("Failed to fetch categories for home page:", err);
+        // Error handled silently or could add user notification
       } finally {
         setLoadingCategories(false);
       }
@@ -23,10 +23,7 @@ const Home = () => {
     fetchCategories();
   }, []);
 
-  const getCategoryIdByName = (categoryName) => {
-    const category = categories.find(cat => cat.name === categoryName);
-    return category ? category._id : null;
-  };
+
 
 
   const goToCategory = (categoryName) => {
@@ -58,6 +55,8 @@ const Home = () => {
           </div>
         </div>
       </div>
+
+     
 
       <div className="signature-collection-container">
         <h1 className="section-heading">Signature Collection</h1>
@@ -97,6 +96,18 @@ const Home = () => {
           )}
         </div>
       </div>
+
+      {/* Color Analysis Section */}
+      {/* <div className="color-analysis-section">
+        <h1 className="color-analysis-heading">Discover Your Perfect Colors</h1>
+        <p className="color-analysis-description">
+          Get personalized color recommendations based on your skin tone, hair color, and eye color.
+          Find the shades that make you glow!
+        </p>
+        <button onClick={() => navigate('/color-analysis')} className="color-analysis-btn">
+          Get My Color Analysis
+        </button>
+      </div> */}
     </div>
   );
 };

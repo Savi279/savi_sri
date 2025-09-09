@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { selectFavoritesCount } from '../store/favoritesSlice';
@@ -8,16 +8,15 @@ import { FaUserCircle, FaBars, FaTimes, FaShoppingCart, FaHeart } from 'react-ic
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const cartItemCount = useSelector(selectCartItemCount);
+  const favoritesCount = useSelector(selectFavoritesCount);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('Header - Favorites count:', favoritesCount);
+  }, [favoritesCount]);
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
   const closeMenu = () => setMenuOpen(false);
-
-  const FavoritesBadge = () => {
-    const favoritesCount = useSelector(selectFavoritesCount);
-    return favoritesCount > 0 ? (
-      <span className="favorites-badge">{favoritesCount}</span>
-    ) : null;
-  };
 
   return (
     <header className="app-header">
@@ -49,7 +48,9 @@ const Header = () => {
           {({ isActive }) => (
             <button className={`favorites-button${isActive ? ' active' : ''}`}>
               <FaHeart size={30} />
-              <FavoritesBadge />
+              {favoritesCount > 0 && (
+                <span className="favorites-badge">{favoritesCount}</span>
+              )}
             </button>
           )}
         </NavLink>

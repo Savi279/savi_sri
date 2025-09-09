@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import "../styleSheets/collections.css";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { addToFavorites, selectIsFavorite } from "../store/favoritesSlice";
+import { addToFavorites, fetchFavorites } from "../store/favoritesSlice";
 import { FaStar, FaRegStar } from "react-icons/fa";
 import { customerProductApi, customerCategoryApi } from '../api/customer_api'; // Adjust path if necessary
 import { selectIsAuthenticated } from "../store/userSlice";
@@ -23,7 +23,7 @@ const Collections = () => {
   const isAuthenticated = useSelector(selectIsAuthenticated);
 
   // Get favorites state for all products
-  const favorites = useSelector(state => state.favorites.items);
+  const favorites = useSelector(state => Array.isArray(state.favorites.items) ? state.favorites.items : []);
   
   const initialCategoryParam = query.get("category");
   const [selectedCategory, setSelectedCategory] = useState(initialCategoryParam || "All");
@@ -43,11 +43,11 @@ const Collections = () => {
         let categoryIdToFetch = null;
         if (selectedCategory && selectedCategory !== "All") {
           const matchedCategory = fetchedCategories.find(cat => cat.name === selectedCategory);
-          if (matchedCategory) {
-            categoryIdToFetch = matchedCategory._id;
+          if (matchedCategory && matchedCategory._id) {
+            categoryIdToFetch = matchedCategory._id.toString(); // Ensure it's a string
           }
         }
-        
+
         const fetchedProducts = await customerProductApi.getAll(categoryIdToFetch);
         setProducts(fetchedProducts);
 
@@ -98,6 +98,8 @@ const Collections = () => {
     try {
       await dispatch(addToFavorites(item._id)).unwrap();
       alert(`${item.name} added to favorites!`);
+      // Fetch updated favorites to update UI
+      await dispatch(fetchFavorites());
     } catch (error) {
       console.log('addToFavorites error', error);
       alert(`Failed to add to favorites: ${error}`);

@@ -1,9 +1,10 @@
 import React from 'react';
+import '../styleSheets/ReturnPolicy.css';
 
 const ReturnPolicy = () => (
-  <div style={{ padding: '20px' }}>
-    <h1>Return Policy</h1>
-    <p>This is a placeholder for the return policy page.</p>
+  <div className="return-policy-container">
+    <h1 className="return-policy-title">Return Policy</h1>
+    <p className="return-policy-content">This is a placeholder for the return policy page.</p>
   </div>
 );
 

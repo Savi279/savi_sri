@@ -64,6 +64,8 @@ export const productApi = {
     getById: (id) => makeRequest('GET', `/products/${id}`, null, false), // Public access for product detail page
     // New endpoint for incrementing views
     incrementView: (productId) => makeRequest('POST', `/products/${productId}/view`, null, false),
+    // New endpoint for submitting reviews
+    submitReview: (productId, reviewData) => makeRequest('POST', `/products/${productId}/review`, reviewData, true),
 };
 
 export const orderApi = {

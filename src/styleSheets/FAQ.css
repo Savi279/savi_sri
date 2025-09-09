@@ -1,0 +1,23 @@
+/* FAQ.css */
+
+.faq-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.faq-title {
+  font-size: 2rem;
+  color: #333;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.faq-content {
+  font-size: 1rem;
+  color: #666;
+  line-height: 1.6;
+}
+
+/* Add more styles as needed for actual FAQ implementation */
